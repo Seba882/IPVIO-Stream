@@ -101,4 +101,21 @@ class TrailerLogicTest {
         assertTrue(TrailerLogic.externalUrl(null, "Avatar 2") == "https://www.youtube.com/results?search_query=Avatar+2+Trailer")
         assertTrue(TrailerLogic.externalUrl("bad id&x=1", "A").startsWith("https://www.youtube.com/results?search_query="))
     }
+
+    @Test
+    fun previewPage_hidesControls_dialogPageKeepsThem() {
+        val pv = TrailerLogic.attempt(0, "dQw4w9WgXcQ", preview = true)!!.html
+        assertTrue(pv.contains("controls=0") && pv.contains("fs=0") && pv.contains("iv_load_policy=3"))
+        val dlg = TrailerLogic.attempt(0, "dQw4w9WgXcQ")!!.html
+        assertFalse(dlg.contains("controls=0"))
+        assertNull(TrailerLogic.attempt(0, "bad id!", preview = true))
+    }
+
+    @Test
+    fun endedState_isRecognised() {
+        assertTrue(TrailerLogic.isEnded("IPVIO_TRAILER_STATE 0"))
+        assertFalse(TrailerLogic.isEnded("IPVIO_TRAILER_STATE 1"))
+        assertFalse(TrailerLogic.isEnded(null))
+        assertTrue(TrailerLogic.PREVIEW_DELAY_MS == 2_000L)
+    }
 }

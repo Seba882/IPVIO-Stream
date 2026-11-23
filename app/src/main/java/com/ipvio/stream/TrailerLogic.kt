@@ -31,19 +31,26 @@ object TrailerLogic {
      * 0: as before (origin and embed host youtube-nocookie.com); 1: origin of the app, embed host nocookie;
      * 2: origin of the app, embed host youtube.com.
      */
-    fun attempt(n: Int, key: String?): Attempt? = when (n) {
-        0 -> embedHtml(key, NOCOOKIE, NOCOOKIE)?.let { Attempt(NOCOOKIE, it) }
-        1 -> embedHtml(key, NOCOOKIE, APP_ORIGIN)?.let { Attempt(APP_ORIGIN, it) }
-        2 -> embedHtml(key, YOUTUBE, APP_ORIGIN)?.let { Attempt(APP_ORIGIN, it) }
+    fun attempt(n: Int, key: String?, preview: Boolean = false): Attempt? = when (n) {
+        0 -> embedHtml(key, NOCOOKIE, NOCOOKIE, preview)?.let { Attempt(NOCOOKIE, it) }
+        1 -> embedHtml(key, NOCOOKIE, APP_ORIGIN, preview)?.let { Attempt(APP_ORIGIN, it) }
+        2 -> embedHtml(key, YOUTUBE, APP_ORIGIN, preview)?.let { Attempt(APP_ORIGIN, it) }
         else -> null
     }
 
-    /** Page for the WebView, or null if the id is not valid. Default: the privacy-enhanced embed host (way 0). */
-    fun embedHtml(key: String?, host: String = NOCOOKIE, origin: String = host): String? {
+    /** Delay before the trailer starts behind the detail page header, like Prime Video. */
+    const val PREVIEW_DELAY_MS = 2_000L
+
+    /**
+     * Page for the WebView, or null if the id is not valid. Default: the privacy-enhanced embed host (way 0).
+     * [preview]: background trailer of the detail page: no player controls, no keyboard, no fullscreen, no annotations.
+     */
+    fun embedHtml(key: String?, host: String = NOCOOKIE, origin: String = host, preview: Boolean = false): String? {
         if (!validKey(key)) return null
+        val extra = if (preview) "&controls=0&disablekb=1&fs=0&iv_load_policy=3&modestbranding=1" else ""
         return "<!doctype html><html><head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">" +
             "<style>html,body{margin:0;height:100%;background:#000}iframe{border:0;width:100%;height:100%}</style></head>" +
-            "<body><iframe id=\"yt\" src=\"$host/embed/$key?autoplay=1&playsinline=1&rel=0" +
+            "<body><iframe id=\"yt\" src=\"$host/embed/$key?autoplay=1&playsinline=1&rel=0$extra" +
             "&enablejsapi=1&origin=$origin\" " +
             "allow=\"autoplay; encrypted-media; picture-in-picture\" allowfullscreen></iframe>" +
             "<script>$DIAG_SCRIPT</script></body></html>"
@@ -51,6 +58,9 @@ object TrailerLogic {
 
     /** The player reports "playing" (state 1). */
     fun isPlaying(console: String?): Boolean = console == "IPVIO_TRAILER_STATE 1"
+
+    /** The player reports "ended" (state 0). */
+    fun isEnded(console: String?): Boolean = console == "IPVIO_TRAILER_STATE 0"
 
     /** YouTube player error code of a console line, or null. */
     fun playerError(console: String?): Int? =

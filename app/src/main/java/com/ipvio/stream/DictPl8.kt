@@ -36,4 +36,6 @@ Keine Teilliste (vollständige Playlist)¦Brak podlisty (cała playlista)
 Keine Teillisten¦Brak podlist
 Neue Teillisten legst du an, indem du bei „Playlist hinzufügen“ die Teilliste einschaltest, Felder ausfüllst und „Hinzufügen“ drückst. Sie werden dann hier aufgelistet und können aktiviert oder gelöscht werden.¦Nowe podlisty tworzysz, włączając podlistę w „Dodaj playlistę”, wypełniając pola i naciskając „Dodaj”. Zostaną tu wylistowane i można je aktywować lub usunąć.
 Alle paar Stunden¦Co kilka godzin
+Trailer automatisch abspielen¦Automatycznie odtwarzaj zwiastuny
+Auf der Detailseite startet der Trailer nach 2 Sekunden hinter dem Titel, solange die Knöpfe oben ausgewählt sind. Braucht einen TMDB-Schlüssel.¦Na stronie szczegółów zwiastun startuje za tytułem po 2 sekundach, dopóki zaznaczone są przyciski na górze. Wymaga klucza TMDB.
 """

@@ -20,4 +20,6 @@ Neue Folgen¦حلقات جديدة
 Technische Infos auf der Detailseite¦معلومات تقنية في صفحة التفاصيل
 Liest beim Öffnen eines Titels den Anfang der Datei und zeigt Auflösung, HDR, Tonspuren und Untertitel. Das belegt kurz eine Verbindung zum Anbieter – bei Zugängen mit nur einer Verbindung ausschalten, wenn gleichzeitig etwas anderes läuft.¦يقرأ بداية الملف عند فتح عنوان ويعرض الدقة وHDR ومسارات الصوت والترجمات. يشغل ذلك اتصالًا بالمزوّد لفترة قصيرة – أوقفه في الحسابات ذات الاتصال الواحد إذا كان شيء آخر قيد التشغيل في الوقت نفسه.
 Alle paar Stunden¦كل بضع ساعات
+Trailer automatisch abspielen¦تشغيل الإعلانات الترويجية تلقائيًا
+Auf der Detailseite startet der Trailer nach 2 Sekunden hinter dem Titel, solange die Knöpfe oben ausgewählt sind. Braucht einen TMDB-Schlüssel.¦في صفحة التفاصيل يبدأ الإعلان الترويجي خلف العنوان بعد ثانيتين ما دامت الأزرار العلوية محددة. يتطلب مفتاح TMDB.
 """
