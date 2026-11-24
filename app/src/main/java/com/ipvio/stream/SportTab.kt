@@ -73,7 +73,7 @@ fun SportTab(live: List<Item>, onPlay: (Item, List<Item>) -> Unit) {
     LaunchedEffect(Unit) { while (true) { delay(60_000); tick++ } }
     val slots by produceState<Pair<List<SportLogic.Slot>, List<SportLogic.Slot>>?>(null, live, tick, Xmltv.channelCount) {
         value = withContext(Dispatchers.Default) {
-            SportLogic.slots(live, { Xmltv.forChannel(it.tvgId) }, System.currentTimeMillis() / 1000, 48 * 3600L, 600)
+            SportLogic.slots(live, { Xmltv.forItem(it) }, System.currentTimeMillis() / 1000, 48 * 3600L, 600)
         }
     }
     val allNow = slots?.first.orEmpty()
@@ -466,7 +466,7 @@ private fun SportCard(s: SportLogic.Slot, modifier: Modifier, onClick: () -> Uni
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(dpx(10))) {
             Box(Modifier.size(dpx(44)).clip(RoundedCornerShape(DS.RadiusS)).background(DS.Overlay2), contentAlignment = Alignment.Center) {
-                if (s.ch.logo != null) AsyncImage(s.ch.logo, null, Modifier.fillMaxSize().padding(4.dp), contentScale = ContentScale.Fit)
+                if (Xmltv.logo(s.ch) != null) AsyncImage(Xmltv.logo(s.ch), null, Modifier.fillMaxSize().padding(4.dp), contentScale = ContentScale.Fit)
                 else Text(raw = true, text = ShowName.of(s.ch.title).take(2).uppercase(), color = Color.White, fontWeight = FontWeight.Bold)
             }
             Text(raw = true, text = ShowName.of(s.ch.title), color = Muted, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
@@ -502,7 +502,7 @@ private fun SportChannelTile(c: Item, modifier: Modifier, onClick: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(dpx(8))
     ) {
         Box(Modifier.size(dpx(96), dpx(64)), contentAlignment = Alignment.Center) {
-            if (c.logo != null) AsyncImage(c.logo, null, Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
+            if (Xmltv.logo(c) != null) AsyncImage(Xmltv.logo(c), null, Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
             else Text(raw = true, text = ShowName.of(c.title).take(3).uppercase(), color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
         }
         Text(raw = true, text = ShowName.of(c.title), color = Color.White, fontSize = 14.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)

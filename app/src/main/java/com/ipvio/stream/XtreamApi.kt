@@ -236,11 +236,23 @@ class XtreamApi(private val client: OkHttpClient, private val ua: String) {
      * or an error object instead of the list): a part that failed in parallel is fetched again on its own, after the
      * channels, so such providers still load completely.
      */
-    fun write(a: XtreamLogic.Acct, out: Writer): Int {
+    fun write(a: XtreamLogic.Acct, out: Writer, liveOnly: Boolean = false): Int {
         onPhase("Zugang wird geprüft …")
         verify(a)
         var n = 0
         out.write(XtreamLogic.header(a)); out.write("\n")
+        if (liveOnly) {
+            // "TV first" (from the nxsreto fork): only the channels, so the first start does not wait for the (much larger) movie and
+            // series lists. The caller fetches the whole list right afterwards in the background.
+            onPhase("Sender werden geladen …")
+            val cats = categories(a, "get_live_categories")
+            stream(XtreamLogic.api(a, "get_live_streams")) { f ->
+                XtreamLogic.liveEntry(a, f, cats)?.let { out.write(it); out.write("\n"); n++ }
+            }
+            check()
+            out.flush()
+            return n
+        }
 
         val vodFile = java.io.File.createTempFile("ipvio_vod", ".part")
         val serFile = java.io.File.createTempFile("ipvio_ser", ".part")

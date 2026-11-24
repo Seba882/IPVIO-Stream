@@ -845,6 +845,30 @@ object PlaylistStore {
 
     // ------------------------------------------------------------------ Download
 
+    // "TV first" (from the nxsreto fork): the very first load of an Xtream login (nothing cached, nothing on screen) fetches only the
+    // channels, so the app opens after the short part of the download. Movies and series follow right away in the
+    // background ([followUp]); until that has worked once, the login is marked so the next start loads from the network.
+    @Volatile private var quickLive = false
+    private const val QUICK_KEY = "tv_first_"
+    private val followScope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + Dispatchers.Main)
+    private fun quickPending(c: Context, u: String) = prefs(c).getBoolean(QUICK_KEY + key(u), false)
+
+    /** After a channels-only first load: fetch the whole list in the background as soon as the loader is free. */
+    private fun followUp(c: Context, u: String) {
+        val app = c.applicationContext
+        followScope.launch {
+            delay(2000)
+            for (i in 0 until 30) {
+                if (!loadLock.isLocked) {
+                    Diag.note("TV first: loading movies and series in the background")
+                    runCatching { load(app, u, false, ask = false) }
+                    return@launch
+                }
+                delay(2000)
+            }
+        }
+    }
+
     /** Downloads the list into a file, with up to two retries on connection loss (resumed if the server allows it). */
     private suspend fun downloadWithRetry(c: Context, u: String): Pair<File, Charset> {
         var last: IOException? = null
@@ -888,6 +912,17 @@ object PlaylistStore {
             // Shown on the Diagnostics page: a plain M3U address has movies and series only if the list itself has them
             Diag.note(hostOf(u) + ": M3U address (not an Xtream login), movies and series come only from the list")
             return downloadList(c, u)
+        }
+        if (quickLive) {
+            try {
+                return downloadApi(c, u, acct)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // The channels-only shortcut does not work with this provider: load everything the usual way
+                quickLive = false
+                rawFile(c, u).delete(); infoFile(c, u).delete()
+            }
         }
         // If get.php has already failed once for this login, use the API right away
         if (useApi(c, u)) { Diag.note(hostOf(u) + ": Xtream, loaded through the provider's API"); return apiOrList(c, u, acct) }
@@ -1013,7 +1048,7 @@ object PlaylistStore {
         api.onTempBytes = { k -> synchronized(lock) { tempN += k; show() } }
         val counter = CountingOut(FileOutputStream(part)) { k -> synchronized(lock) { listN = k; show() } }
         try {
-            val n = OutputStreamWriter(BufferedOutputStream(counter, 1 shl 16), Charsets.UTF_8).use { w -> api.write(acct, w) }
+            val n = OutputStreamWriter(BufferedOutputStream(counter, 1 shl 16), Charsets.UTF_8).use { w -> api.write(acct, w, quickLive) }
             PlaylistDiag.log("download(api)", "entries=$n bytes=${part.length()}")
             if (n == 0) throw PlaylistError("Keine Sender in der Playlist gefunden.")
         } catch (e: Throwable) {
@@ -1727,6 +1762,7 @@ object PlaylistStore {
         } finally {
             pre = null   // T-047: an unused read-ahead must not keep the list in memory
             loading = false   // also on cancel: otherwise the loading state (and the screen keep-awake) would stay stuck
+            quickLive = false
             heavy = false
             langAsk = null
             loadStarted = 0L
@@ -1762,7 +1798,8 @@ object PlaylistStore {
         }
         // Take further simultaneously shown playlists straight from the cache (fast start)
         if (usedCache) withContext(Dispatchers.IO) { runCatching { loadExtras(c, network = false) }.onFailure { if (it is CancellationException) throw it } }
-        if (usedCache && skipNetworkWhenCached) {
+        // "TV first" still owes the movies and series from an earlier start: do not skip the network this time
+        if (usedCache && skipNetworkWhenCached && !quickPending(c, u)) {
             if (save) finishSave(c, u)
             return true
         }
@@ -1771,11 +1808,15 @@ object PlaylistStore {
         if (wait > 0) kotlinx.coroutines.delay(wait)
         error = null
         val before = sig(primaryItems)
+        // "TV first": nothing cached and nothing on screen, an Xtream login -> channels only now, the rest in the background
+        quickLive = !usedCache && rawChannels.isEmpty() && !u.startsWith("file://") && StalkerLogic.parse(u) == null && XtreamLogic.fromUrl(u) != null
         heavy = true
         if (loadStarted == 0L) loadStarted = System.currentTimeMillis()
         val ok = withContext(Dispatchers.IO) {
             try {
                 val (src, cs) = downloadWithRetry(c, u)
+                val wasQuick = quickLive
+                quickLive = false
                 val gzTmp = tmp(gzFile(c, u))
                 val b = build(c, u, src, false, cs, ask, gzTmp, forceAsk)
                 val parsed = b.parsed
@@ -1798,6 +1839,15 @@ object PlaylistStore {
                 if (save) finishSave(c, u)
                 askNext = false
                 refreshError = null
+                if (wasQuick) {
+                    // Channels are on screen. The stored download holds only them: drop it so the next load fetches everything.
+                    dropRaw(c, u)
+                    prefs(c).edit().putBoolean(QUICK_KEY + key(u), true).apply()
+                    Diag.note("TV first: channels ready")
+                    followUp(c, u)
+                } else if (quickPending(c, u)) {
+                    prefs(c).edit().remove(QUICK_KEY + key(u)).apply()
+                }
                 true
             } catch (e: CancellationException) {
                 if (save) failPending(c, MSG_CANCEL)
