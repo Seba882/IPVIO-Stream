@@ -259,4 +259,7 @@ WireGuard-Konfiguration (VPN)¦Konfiguracja WireGuard (VPN)
 Prüfung anhalten¦Zatrzymaj sprawdzanie
 Eigene Texte entfernen, z. B. PL VIP:, VIP |, RAW¦Własne teksty do usunięcia, np. PL VIP:, VIP |, RAW
 Mit Komma trennen. Ein Text wird am Anfang oder am Ende eines Namens entfernt (Groß- und Kleinschreibung egal). Nur die Anzeige ändert sich.¦Oddziel przecinkami. Tekst jest usuwany na początku lub na końcu nazwy (wielkość liter nie ma znaczenia). Zmienia się tylko wyświetlanie.
+Aus der Sammlung „{0}“¦Z kolekcji „{0}”
+Titel als Logo¦Tytuł jako logo
+Auf der Detailseite erscheint der Titel als Logo des Films (von TMDB), wenn es eines gibt. Braucht einen TMDB-Schlüssel.¦Na stronie szczegółów tytuł wyświetla się jako logo filmu (z TMDB), jeśli jest dostępne. Wymaga klucza TMDB.
 """

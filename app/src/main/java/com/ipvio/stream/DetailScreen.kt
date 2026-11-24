@@ -266,6 +266,14 @@ private fun DetailScreenFull(
     val restoreReq = remember { FocusRequester() }
     val castState = rememberLazyListState()
     val simState = rememberLazyListState()
+    val colState = rememberLazyListState()
+    val collection by produceState(emptyList<Item>(), meta?.collectionId, all) {
+        val id = meta?.collectionId
+        value = if (id == null || item.kind != Kind.MOVIE) emptyList() else {
+            val parts = MetaRepo.collectionParts(id)
+            withContext(Dispatchers.Default) { TmdbExtraLogic.inPlaylist(parts, all) { MetaRepo.cached(it)?.tmdbId?.takeIf { t -> t > 0 } }.map { it.second } }
+        }
+    }
     LaunchedEffect(autoFocus) { if (autoFocus && memKey == null && retSE == null) runCatching { playFocus.requestFocus() } }
     LaunchedEffect(memKey, similar, credits) {
         if (memKey == null || restored) return@LaunchedEffect
@@ -461,7 +469,13 @@ private fun DetailScreenFull(
                             Kicker(kindLabel(item.kind), raw = false)
                             qualityOf(item)?.let { PreviewQualityBadge(it) }
                         }
-                        Text(raw = true, text = ShowName.of(item.title), color = Tok.TextHi, fontSize = spx(84), lineHeight = spx(84), fontWeight = FontWeight.ExtraBold,
+                        // Title logo from TMDB (like Prime Video / Netflix); the text title stays as fallback when there is none or it fails
+                        val logoUrl = meta?.logo?.takeIf { General.titleLogo }?.let { "https://image.tmdb.org/t/p/w500$it" }
+                        var logoFailed by remember(logoUrl) { mutableStateOf(false) }
+                        if (logoUrl != null && !logoFailed) {
+                            AsyncImage(logoUrl, ShowName.of(item.title), Modifier.height(110.dp).widthIn(max = 620.dp).padding(vertical = 6.dp),
+                                contentScale = ContentScale.Fit, alignment = Alignment.CenterStart, onError = { logoFailed = true })
+                        } else Text(raw = true, text = ShowName.of(item.title), color = Tok.TextHi, fontSize = spx(84), lineHeight = spx(84), fontWeight = FontWeight.ExtraBold,
                             letterSpacing = (-1.5).sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
                         HeroMetaLine(item, meta, dots = false)
                         // Tracks of the file read from its header (T-033, issue #24); series: first episode of the shown season
@@ -766,6 +780,11 @@ private fun DetailScreenFull(
             }
             if (credits == null && (meta?.tmdbId ?: 0) > 0 && CreditsRepo.lastError != null) item(key = "cerr") {
                 Text("Besetzung nicht verfügbar: ${CreditsRepo.lastError}", color = Muted, fontSize = 13.sp, modifier = Modifier.padding(top = 24.dp))
+            }
+            // TMDB collection (saga): the other parts that are in the playlist, in the order of the saga
+            if (collection.size > 1) item(key = "collection") {
+                SimilarRow("Aus der Sammlung „" + (meta?.collectionName ?: "") + "“", collection.filter { it.id != item.id }, colState,
+                    if (memKey?.startsWith("k:") == true) memKey.drop(2) else null, restoreReq) { i -> DetailFocus.last[item.id] = "k:" + i.id; onOpenItem(i) }
             }
             if (similar.isNotEmpty()) item(key = "similar") { SimilarRow("Ähnliche Titel in deiner Playlist", similar, simState, if (memKey?.startsWith("s:") == true) memKey.drop(2) else null, restoreReq) { i -> DetailFocus.last[item.id] = "s:" + i.id; onOpenItem(i) } }
             if (MetaRepo.enabled()) item {

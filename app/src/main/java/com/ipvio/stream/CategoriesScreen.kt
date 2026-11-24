@@ -129,7 +129,7 @@ fun CategoriesScreen(
         if (mode == 1 && f != null) { folder = f.prefix } else { onPick(name, items, s) }
     }
     // Christmas titles of the whole area (provider categories hold every title once or more)
-    val xmas = remember(req.provider) { if (SeasonLogic.isXmasSeason()) SeasonLogic.xmas(req.provider.values.asSequence().flatten().asIterable()) else emptyList() }
+    val xmas = remember(req.provider) { if (SeasonLogic.isXmasSeason()) SeasonLogic.xmas(req.provider.values.asSequence().flatten().asIterable()) { MetaRepo.cached(it)?.xmasKw == true } else emptyList() }
     val entries = remember(map, az, saved, CatOrder.version, req.recent, req.watch, xmas) {
         val l = map.entries.map { it.key to it.value }
         val base = if (saved && area != null) CatOrder.sorted(area, map.keys.toList()).mapNotNull { k -> map[k]?.let { k to it } }

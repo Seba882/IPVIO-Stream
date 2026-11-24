@@ -525,6 +525,7 @@ private fun GeneralPage(ctx: Context) {
     Field(General.removeTexts, { General.setRemoveTexts(ctx, it) }, "Eigene Texte entfernen, z. B. PL VIP:, VIP |, RAW")
     Hint("Mit Komma trennen. Ein Text wird am Anfang oder am Ende eines Namens entfernt (Groß- und Kleinschreibung egal). Nur die Anzeige ändert sich.")
     ToggleRow("Trailer auf der Startseite", "Auf der Startseite startet der Trailer des ausgewählten Titels nach 2 Sekunden hinter dem großen Bild. Braucht einen TMDB-Schlüssel.", General.trailerHome) { General.setTrailerHome(ctx, it) }
+    ToggleRow("Titel als Logo", "Auf der Detailseite erscheint der Titel als Logo des Films (von TMDB), wenn es eines gibt. Braucht einen TMDB-Schlüssel.", General.titleLogo) { General.setTitleLogo(ctx, it) }
     // Phone/tablet: landscape (the UI is built for the TV)
     if (MobilePrefs.isMobile(ctx)) {
         val act = generateSequence<Context>(ctx) { (it as? android.content.ContextWrapper)?.baseContext }.filterIsInstance<android.app.Activity>().firstOrNull()

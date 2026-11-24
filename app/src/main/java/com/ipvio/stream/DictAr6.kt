@@ -42,4 +42,7 @@ Sprachen werden geprüft¦جارٍ فحص اللغات
 Prüfung anhalten¦إيقاف الفحص
 Eigene Texte entfernen, z. B. PL VIP:, VIP |, RAW¦إزالة نصوص خاصة، مثل PL VIP:, VIP |, RAW
 Mit Komma trennen. Ein Text wird am Anfang oder am Ende eines Namens entfernt (Groß- und Kleinschreibung egal). Nur die Anzeige ändert sich.¦افصل بفواصل. تتم إزالة النص في بداية الاسم أو نهايته (لا يهم حجم الأحرف). يتغير العرض فقط.
+Aus der Sammlung „{0}“¦من مجموعة «{0}»
+Titel als Logo¦العنوان كشعار
+Auf der Detailseite erscheint der Titel als Logo des Films (von TMDB), wenn es eines gibt. Braucht einen TMDB-Schlüssel.¦في صفحة التفاصيل يظهر العنوان كشعار الفيلم (من TMDB) إن وُجد. يتطلب مفتاح TMDB.
 """

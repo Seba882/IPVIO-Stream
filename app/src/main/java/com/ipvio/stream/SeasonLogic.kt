@@ -27,9 +27,12 @@ object SeasonLogic {
     /** A Christmas title: by its name or by its provider category. */
     fun isXmas(title: String, group: String = ""): Boolean = XMAS.containsMatchIn(title) || (group.isNotEmpty() && XMAS.containsMatchIn(group))
 
-    /** Christmas titles of [items], each title once, in the given order. */
-    fun xmas(items: Iterable<Item>): List<Item> {
+    /**
+     * Christmas titles of [items], each title once, in the given order: by name, or by TMDB keywords where the app already
+     * knows them ([byKeywords], e.g. "Klaus" has no Christmas word in its name).
+     */
+    fun xmas(items: Iterable<Item>, byKeywords: (Item) -> Boolean = { false }): List<Item> {
         val seen = HashSet<String>()
-        return items.filter { isXmas(it.title, it.group) && seen.add(it.id) }
+        return items.filter { (isXmas(it.title, it.group) || byKeywords(it)) && seen.add(it.id) }
     }
 }

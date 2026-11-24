@@ -30,6 +30,8 @@ object General {
     var trailerPreview by mutableStateOf(true)
     /** Home screen: the trailer of the selected title plays behind the big picture (default off). */
     var trailerHome by mutableStateOf(false)
+    /** Detail page: the title as the movie's logo from TMDB instead of text (default on). */
+    var titleLogo by mutableStateOf(true)
     /** Channel and category names without a leading country tag ("PL: TVN" → "TVN"), display only (default off). */
     var hidePrefix by mutableStateOf(false)
     /** The user's own texts removed from channel and category names, comma or line separated (display only). */
@@ -137,6 +139,7 @@ object General {
         keepAwakeBrowse = p.getBoolean("keep_awake_browse", false)
         trailerPreview = p.getBoolean("trailer_preview", true)
         trailerHome = p.getBoolean("trailer_home", false)
+        titleLogo = p.getBoolean("title_logo", true)
         hidePrefix = p.getBoolean("hide_prefix", false)
         removeTexts = p.getString("remove_texts", "").orEmpty()
         vodCats = p.getBoolean("vod_cats", false)
@@ -193,6 +196,7 @@ object General {
     fun setTrailerPreview(c: Context, v: Boolean) { trailerPreview = v; prefs(c).edit().putBoolean("trailer_preview", v).apply() }
     fun setHidePrefix(c: Context, v: Boolean) { hidePrefix = v; prefs(c).edit().putBoolean("hide_prefix", v).apply() }
     fun setRemoveTexts(c: Context, v: String) { removeTexts = v.take(500); prefs(c).edit().putString("remove_texts", removeTexts).apply() }
+    fun setTitleLogo(c: Context, v: Boolean) { titleLogo = v; prefs(c).edit().putBoolean("title_logo", v).apply() }
     fun setTrailerHome(c: Context, v: Boolean) { trailerHome = v; prefs(c).edit().putBoolean("trailer_home", v).apply() }
     fun setPlan(c: Context, mode: Int = refreshMode, interval: Int = refreshInterval, hour: Int = refreshHour, minute: Int = refreshMinute, dow: Int = refreshDow) {
         refreshMode = mode.coerceIn(0, 4); refreshInterval = interval.coerceIn(1, 168)
