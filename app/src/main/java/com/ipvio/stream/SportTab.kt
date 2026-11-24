@@ -503,7 +503,7 @@ private fun SportChannelTile(c: Item, modifier: Modifier, onClick: () -> Unit) {
             if (c.logo != null) AsyncImage(c.logo, null, Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
             else Text(raw = true, text = ShowName.of(c.title).take(3).uppercase(), color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
         }
-        Text(raw = true, text = c.title, color = Color.White, fontSize = 14.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        Text(raw = true, text = ShowName.of(c.title), color = Color.White, fontSize = 14.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
     }
 }
 

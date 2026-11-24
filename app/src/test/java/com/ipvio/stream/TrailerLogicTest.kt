@@ -1,5 +1,6 @@
 package com.ipvio.stream
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -124,5 +125,26 @@ class TrailerLogicTest {
         assertTrue(TrailerLogic.codecScript(true).contains("var force=true"))
         assertTrue(TrailerLogic.codecScript(false).contains("var force=false"))
         assertTrue(TrailerLogic.diagLine("IPVIO_TRAILER_CODEC video/mp4; codecs=\"avc1.4d401f\"")!!.startsWith("Trailer: codec video/mp4"))
+    }
+
+    @Test
+    fun pick_prefersAppLanguageThenEnglish() {
+        fun v(k: String, l: String?, t: String = "Trailer", o: Boolean = true, site: String = "YouTube") = TrailerLogic.Video(k, site, t, l, o)
+        val list = listOf(v("enTrailer01", "en"), v("plTeaser001", "pl", "Teaser"), v("plTrailer01", "pl", o = false), v("plTrailer02", "pl"), v("vimeoPL0001", "pl", site = "Vimeo"))
+        assertEquals("plTrailer02", TrailerLogic.pick(list, "pl")!!.key)
+        assertEquals("enTrailer01", TrailerLogic.pick(list, "de")!!.key)
+        assertEquals("plTeaser001", TrailerLogic.pick(listOf(v("plTeaser001", "pl", "Teaser"), v("clip0000001", "pl", "Clip")), "pl")!!.key)
+        assertNull(TrailerLogic.pick(emptyList(), "pl"))
+    }
+
+    @Test
+    fun langParams_andCaptions() {
+        assertEquals("&hl=pl", TrailerLogic.langParams("pl", false))
+        assertEquals("&hl=pl&cc_load_policy=1&cc_lang_pref=pl", TrailerLogic.langParams("pl", true))
+        assertEquals("", TrailerLogic.langParams("p\"l", true))
+        assertFalse(TrailerLogic.wantCaptions("pl", "pl"))
+        assertTrue(TrailerLogic.wantCaptions("en", "pl"))
+        assertTrue(TrailerLogic.wantCaptions(null, "pl"))
+        assertTrue(TrailerLogic.attempt(0, "dQw4w9WgXcQ", preview = true, lang = "&hl=pl")!!.html.contains("&hl=pl"))
     }
 }

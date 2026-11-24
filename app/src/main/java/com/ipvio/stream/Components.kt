@@ -206,7 +206,7 @@ fun PosterCard(
                 }
             }
         }
-        Text(raw = true, text = item.title, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, maxLines = titleLines,
+        Text(raw = true, text = ShowName.of(item.title), color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, maxLines = titleLines,
             overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 8.dp))
         val sub = subtitle ?: when (item.kind) {
             Kind.SERIES -> seriesInfo(item)
@@ -249,8 +249,8 @@ fun LiveCard(item: Item, onClick: () -> Unit, modifier: Modifier = Modifier, onL
             if (DeadLinks.isDead(item.url)) AppIcon(AIcon.Warning, DS.Gold, Modifier.align(Alignment.BottomEnd).padding(8.dp), 20.dp)
         }
         Column(Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
-            Text(raw = true, text = item.title, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(raw = true, text = item.group, color = Muted, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(raw = true, text = ShowName.of(item.title), color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(raw = true, text = ShowName.of(item.group), color = Muted, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }

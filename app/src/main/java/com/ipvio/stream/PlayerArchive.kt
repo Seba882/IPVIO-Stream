@@ -141,7 +141,7 @@ fun BoxScope.ArchivePanel(
                                 if (c.logo != null) AsyncImage(c.logo, null, Modifier.fillMaxSize().padding(3.dp), contentScale = ContentScale.Fit)
                             }
                             Column(Modifier.weight(1f)) {
-                                Text(raw = true, text = c.title, color = Color.White, fontSize = 15.sp, fontWeight = if (sel) FontWeight.Bold else FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Text(raw = true, text = ShowName.of(c.title), color = Color.White, fontSize = 15.sp, fontWeight = if (sel) FontWeight.Bold else FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 Text("${Catchup.of(c)?.days ?: 0} Tage", color = Muted, fontSize = 13.sp)
                             }
                         }

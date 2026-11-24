@@ -20,6 +20,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.composed
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.BlendMode
@@ -47,7 +51,7 @@ private fun activityOf(c: Context): ComponentActivity? =
  * takes focus, so the remote keeps working on the buttons.
  */
 @Composable
-fun TrailerPreview(key: String?, active: Boolean, modifier: Modifier = Modifier) {
+fun TrailerPreview(key: String?, active: Boolean, modifier: Modifier = Modifier, trailerLang: String? = null) {
     if (!TrailerLogic.validKey(key)) return
     val ctx = LocalContext.current
     var resumed by remember { mutableStateOf(true) }
@@ -110,7 +114,10 @@ fun TrailerPreview(key: String?, active: Boolean, modifier: Modifier = Modifier)
                 holder[0] = null
             }
         }
-        val way = TrailerLogic.attempt(n, key, preview = true, clearBg = mode == 1 || mode == 2)
+        // Player in the app language; subtitles (app language preferred) when the trailer is in another language
+        val ui = Lang.code()
+        val way = TrailerLogic.attempt(n, key, preview = true, clearBg = mode == 1 || mode == 2,
+            lang = TrailerLogic.langParams(ui, TrailerLogic.wantCaptions(trailerLang, ui)))
         val make: (Context) -> WebView = { c ->
             WebView(c).apply {
                 isFocusable = false
@@ -149,9 +156,13 @@ fun TrailerPreview(key: String?, active: Boolean, modifier: Modifier = Modifier)
         } else if (mode != 3) {
             AndroidView(modifier = modifier.alpha(alpha), factory = make)
         } else {
-            // Placeholder in the layout gives the place; the WebView itself sits in the activity's content frame
+            // The WebView sits in the activity's content frame UNDER the Compose view (index 0); while it plays, the
+            // app's backgrounds leave a hole there (TrailerHole), so the video shows through and the gradients and
+            // text of the page are drawn on top of it, as with the backdrop picture.
             val content = remember(activity) { activity?.findViewById<android.widget.FrameLayout>(android.R.id.content) }
+            var box by remember { mutableStateOf<androidx.compose.ui.geometry.Rect?>(null) }
             Spacer(modifier.onGloballyPositioned { lc ->
+                box = lc.boundsInRoot()
                 val frame = content ?: return@onGloballyPositioned
                 val b = lc.boundsInWindow()
                 val loc = IntArray(2).also { frame.getLocationInWindow(it) }
@@ -159,17 +170,33 @@ fun TrailerPreview(key: String?, active: Boolean, modifier: Modifier = Modifier)
                     leftMargin = b.left.toInt() - loc[0]; topMargin = b.top.toInt() - loc[1]
                 }
                 val w = holder[0] ?: make(frame.context).also {
-                    frame.addView(it, lp)
-                    Diag.report("Trailer preview: picture mode 4 (plain view ${lp.width}x${lp.height})")
+                    frame.addView(it, 0, lp)
+                    Diag.report("Trailer preview: picture mode 4 (view under the page ${lp.width}x${lp.height})")
                 }
                 if (w.parent != null && (w.layoutParams as? android.widget.FrameLayout.LayoutParams)?.let {
                         it.width != lp.width || it.height != lp.height || it.leftMargin != lp.leftMargin || it.topMargin != lp.topMargin
                     } == true) w.layoutParams = lp
-                // Transparent until YouTube reports playing (not INVISIBLE: a hidden WebView may pause the video)
-                w.alpha = if (playing) 1f else 0f
             })
-            // Visibility also follows "playing" without a new layout pass
-            androidx.compose.runtime.SideEffect { holder[0]?.alpha = if (playing) 1f else 0f }
+            androidx.compose.runtime.SideEffect { TrailerHole.rect = if (playing) box else null }
+            DisposableEffect(Unit) { onDispose { TrailerHole.rect = null } }
         }
     }
+}
+
+/** Place of the trailer (root coordinates) while it plays under the page; backgrounds leave it out. */
+object TrailerHole {
+    var rect by mutableStateOf<androidx.compose.ui.geometry.Rect?>(null)
+}
+
+/** Background in [color] with a hole where the trailer plays under the page ([TrailerHole]). */
+fun Modifier.holeBackground(color: Color): Modifier = composed {
+    var origin by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+    this.onGloballyPositioned { origin = it.positionInRoot() }
+        .drawBehind {
+            val h = TrailerHole.rect
+            if (h == null) drawRect(color)
+            else clipRect(h.left - origin.x, h.top - origin.y, h.right - origin.x, h.bottom - origin.y, androidx.compose.ui.graphics.ClipOp.Difference) {
+                this@drawBehind.drawRect(color)
+            }
+        }
 }

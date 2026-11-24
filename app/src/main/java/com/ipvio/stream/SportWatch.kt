@@ -166,7 +166,7 @@ internal fun ChannelPicker(g: SportData.Game, live: List<Item>, onClose: () -> U
                 itemsIndexed(pool, key = { i, c -> c.id + "#" + i }) { i, c ->
                     FRow({ onPick(c.id) }, req = if (i == 0) first else null) {
                         TeamLogo(c.logo, c.title.take(2), dpx(30))
-                        Text(raw = true, text = c.title, color = Color.White, fontSize = spx(16), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(raw = true, text = ShowName.of(c.title), color = Color.White, fontSize = spx(16), maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 }
             }
