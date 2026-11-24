@@ -74,11 +74,30 @@ input,textarea{width:100%;box-sizing:border-box;padding:14px;margin:6px 0;border
 input[type=checkbox]{width:auto}label{display:block;margin:8px 0}
 button{width:100%;padding:14px;margin-top:10px;border:0;border-radius:10px;background:#4ADE80;color:#0B0F19;font-size:17px;font-weight:700}"""
 
-    /** Small script: send a file as the body and show the response. */
-    private fun sendFileJs(fn: String, path: String, codeId: String, fileId: String, statusId: String): String =
-        """<script>function $fn(){var f=document.getElementById('$fileId').files[0];var c=document.getElementById('$codeId').value;if(!f){return}
-document.getElementById('$statusId').textContent='…';fetch('$path?code='+encodeURIComponent(c)+'&name='+encodeURIComponent(f.name),{method:'POST',body:f})
-.then(function(r){return r.text()}).then(function(t){document.open();document.write(t);document.close()}).catch(function(){document.getElementById('$statusId').textContent='Error'})</script>"""
+    /** Text for a single-quoted JavaScript string. */
+    private fun js(t: String) = t.replace("\\", "\\\\").replace("'", "\\'").replace("<", "\\u003c")
+
+    /**
+     * Small script: send a file as the body and show the response. While sending, a progress bar with percent and MB;
+     * once everything is sent, a running bar until the TV answers (it saves and checks the file).
+     */
+    private fun sendFileJs(li: Int, fn: String, path: String, codeId: String, fileId: String, statusId: String): String {
+        val sending = js(tr(li, "Wird gesendet", "Sending"))
+        val working = js(tr(li, "Wird auf dem Fernseher verarbeitet …", "Processing on the TV …"))
+        val noFile = js(tr(li, "Bitte zuerst eine Datei wählen.", "Please choose a file first."))
+        val lost = js(tr(li, "Verbindung unterbrochen", "Connection lost"))
+        return """<script>function $fn(){var st=document.getElementById('$statusId');var f=document.getElementById('$fileId').files[0];
+var c=document.getElementById('$codeId').value;if(!f){st.textContent='$noFile';return}
+st.innerHTML='<progress id="${fn}P" max="100" value="0" style="width:100%"></progress><br><span id="${fn}T"></span>';
+var pb=document.getElementById('${fn}P'),tx=document.getElementById('${fn}T');
+function mb(b){return (b/1048576).toFixed(1)}
+var x=new XMLHttpRequest();x.open('POST','$path?code='+encodeURIComponent(c)+'&name='+encodeURIComponent(f.name));
+x.upload.onprogress=function(e){if(!e.lengthComputable)return;var p=Math.round(e.loaded*100/e.total);pb.value=p;
+tx.textContent='$sending '+p+' % ('+mb(e.loaded)+' / '+mb(e.total)+' MB)'};
+x.upload.onload=function(){pb.removeAttribute('value');tx.textContent='$working'};
+x.onload=function(){document.open();document.write(x.responseText);document.close()};
+x.onerror=function(){st.textContent='$lost'};x.send(f)}</script>"""
+    }
 
     fun page(li: Int): String = page(li, Features())
 
@@ -105,7 +124,7 @@ button{width:100%;padding:14px;margin-top:10px;border:0;border-radius:10px;backg
             (if (feats.upload) """<h2>${t("oder Playlist-Datei vom Handy", "or a playlist file from your phone")}</h2>
 <input id="uc" inputmode="numeric" maxlength="4" placeholder="${t("Code vom Fernseher", "Code from the TV")}">
 <input id="uf" type="file" accept=".m3u,.m3u8,.txt,audio/x-mpegurl,application/vnd.apple.mpegurl,text/plain">
-<button onclick="up()">${t("Datei hochladen", "Upload file")}</button><p id="us"></p>""" + sendFileJs("up", "/upload", "uc", "uf", "us") else "") +
+<button onclick="up()">${t("Datei hochladen", "Upload file")}</button><p id="us"></p>""" + sendFileJs(li, "up", "/upload", "uc", "uf", "us") else "") +
             (if (feats.epg) """<form method="post" action="/epg"><h2>${t("TV-Guide-Adresse (EPG, XMLTV)", "TV guide address (EPG, XMLTV)")}</h2>
 <input name="code" inputmode="numeric" maxlength="4" placeholder="${t("Code vom Fernseher", "Code from the TV")}" required>
 <textarea name="epg" rows="3" placeholder="http://…/xmltv.php?username=…&amp;password=…"></textarea>
@@ -114,12 +133,12 @@ button{width:100%;padding:14px;margin-top:10px;border:0;border-radius:10px;backg
 <p>${t("Exportdatei wählen: Letterboxd ZIP oder CSV, MyAnimeList XML, Trakt JSON. Titel, die in deiner Playlist vorkommen, kommen in Merkliste bzw. Verlauf.", "Choose the export file: Letterboxd ZIP or CSV, MyAnimeList XML, Trakt JSON. Titles found in your playlist go to the watchlist or history.")}</p>
 <input id="lc" inputmode="numeric" maxlength="4" placeholder="${t("Code vom Fernseher", "Code from the TV")}">
 <input id="lf" type="file">
-<button onclick="lu()">${t("Liste hochladen", "Upload list")}</button><p id="ls"></p>""" + sendFileJs("lu", "/listimport", "lc", "lf", "ls") else "") +
+<button onclick="lu()">${t("Liste hochladen", "Upload list")}</button><p id="ls"></p>""" + sendFileJs(li, "lu", "/listimport", "lc", "lf", "ls") else "") +
             (if (feats.vpn) """<h2>${t("WireGuard-Konfiguration (VPN)", "WireGuard configuration (VPN)")}</h2>
 <p>${t("Wähle die .conf-Datei deines VPN-Anbieters. Sie enthält einen privaten Schlüssel: sende sie nur über dein eigenes WLAN.", "Choose the .conf file of your VPN provider. It contains a private key: only send it over your own Wi-Fi.")}</p>
 <input id="vc" inputmode="numeric" maxlength="4" placeholder="${t("Code vom Fernseher", "Code from the TV")}">
 <input id="vf" type="file" accept=".conf,text/plain">
-<button onclick="vp()">${t("Datei hochladen", "Upload file")}</button><p id="vs"></p>""" + sendFileJs("vp", "/vpn", "vc", "vf", "vs") else "") +
+<button onclick="vp()">${t("Datei hochladen", "Upload file")}</button><p id="vs"></p>""" + sendFileJs(li, "vp", "/vpn", "vc", "vf", "vs") else "") +
             (if (feats.keys) """<h2><a href="/keys">${t("API-Schlüssel eingeben (TMDB, OMDb, Untertitel)", "Enter API keys (TMDB, OMDb, subtitles)")}</a></h2>""" else "") +
             (if (feats.transfer) """<h2><a href="/transfer">${t("Einstellungen auf ein anderes Gerät übertragen", "Transfer settings to another device")}</a></h2>""" else "") +
             (if (feats.crash) """<h2><a href="/crash">${t("Letzten Absturzbericht anzeigen", "Show the last crash report")}</a></h2>""" else "") +
@@ -159,7 +178,7 @@ button{width:100%;padding:14px;margin-top:10px;border:0;border-radius:10px;backg
 <h2>${t("Sicherung einspielen", "Upload backup")}</h2>
 <input id="rc" inputmode="numeric" maxlength="4" placeholder="${t("Code vom Fernseher", "Code from the TV")}">
 <input id="rf" type="file" accept=".json,application/json">
-<button onclick="rs()">${t("Einspielen", "Restore")}</button><p id="rst"></p>""" + sendFileJs("rs", "/restore", "rc", "rf", "rst") +
+<button onclick="rs()">${t("Einspielen", "Restore")}</button><p id="rst"></p>""" + sendFileJs(li, "rs", "/restore", "rc", "rf", "rst") +
             """<p>${t("Die Datei mit Playlists enthält deine Zugangsdaten. Gib sie nicht weiter.", "The file with playlists contains your logins. Do not share it.")}</p></body></html>"""
     }
 
@@ -323,14 +342,38 @@ class PhoneImport(private val onReceive: (PhoneInput) -> Unit) {
         else -> { fails.set(0); 200 }
     }
 
+    /** Input stream that counts the bytes read, so [handle] knows how much of the body is still unread. */
+    private class CountingInput(private val inner: InputStream) : InputStream() {
+        var count = 0L
+            private set
+        override fun read(): Int = inner.read().also { if (it >= 0) count++ }
+        override fun read(b: ByteArray, off: Int, len: Int): Int = inner.read(b, off, len).also { if (it > 0) count += it }
+        override fun available(): Int = inner.available()
+    }
+
+    /** Skips up to [left] bytes (at most [MAX_DRAIN]); stops quietly on the end of the stream or a timeout. */
+    private fun drain(ins: InputStream, left: Long) {
+        if (left <= 0 || left > MAX_DRAIN) return
+        runCatching {
+            val buf = ByteArray(64 * 1024)
+            var rest = left
+            while (rest > 0) {
+                val r = ins.read(buf, 0, minOf(buf.size.toLong(), rest).toInt())
+                if (r < 0) break
+                rest -= r
+            }
+        }
+    }
+
     private class Reply(val status: Int, val body: ByteArray, val type: String = "text/html; charset=utf-8", val extra: String = "")
 
     private fun html(status: Int, s: String) = Reply(status, s.toByteArray(Charsets.UTF_8))
 
     private fun handle(s: Socket) {
         s.soTimeout = 15000
-        val ins = s.getInputStream()
+        val ins = CountingInput(s.getInputStream())
         val h = readHead(ins) ?: return
+        val afterHead = ins.count
         val li = PhoneImportLogic.langIndex(h.lang)
         val feats = PhoneImportLogic.Features(saveUpload != null, backup != null, crash != null, onEpg != null, onList != null, onKeys != null, onVpn != null)
         val r: Reply = when (h.method + " " + h.path) {
@@ -436,7 +479,7 @@ class PhoneImport(private val onReceive: (PhoneInput) -> Unit) {
                 val c = codeOk(h.query["code"])
                 if (rs == null) html(404, PhoneImportLogic.message(li, "bad"))
                 else if (c != 200) html(c, PhoneImportLogic.message(li, if (c == 403) "code" else "lock"))
-                else if (h.len <= 0 || h.len > 4L * 1024 * 1024) html(400, PhoneImportLogic.message(li, "bad"))
+                else if (h.len <= 0 || h.len > Backup.MAX_BYTES) html(400, PhoneImportLogic.message(li, "bad"))
                 else {
                     val bytes = ByteArray(h.len.toInt())
                     var n = 0
@@ -470,6 +513,9 @@ class PhoneImport(private val onReceive: (PhoneInput) -> Unit) {
                 } else html(404, PhoneImportLogic.message(li, "bad"))
             }
         }
+        // Read the rest of an unread body (e.g. a file sent with a wrong code): if the socket closes while the phone is
+        // still sending, the connection is reset and the browser shows only "Error" instead of the message.
+        drain(ins, h.len - (ins.count - afterHead))
         val out = s.getOutputStream()
         val reason = when (r.status) { 200 -> "OK"; 400 -> "Bad Request"; 403 -> "Forbidden"; 404 -> "Not Found"; 413 -> "Payload Too Large"; 429 -> "Too Many Requests"; else -> "Error" }
         out.write(("HTTP/1.1 ${r.status} $reason\r\nContent-Type: ${r.type}\r\nCache-Control: no-store\r\nX-Content-Type-Options: nosniff\r\n" +
@@ -485,6 +531,8 @@ class PhoneImport(private val onReceive: (PhoneInput) -> Unit) {
 
         /** Largest uploadable list export (Letterboxd, MyAnimeList, Trakt); same limit as the file picker on the TV (ListImportUi). */
         const val MAX_LIST_UPLOAD = 16L * 1024 * 1024
+        /** Largest unread body that is still read to the end before an error reply (larger ones: connection just closes). */
+        const val MAX_DRAIN = 64L * 1024 * 1024
 
         /** Local IPv4 address of the device in the Wi-Fi/LAN (or null). */
         fun localIp(): String? = runCatching {

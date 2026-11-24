@@ -300,6 +300,7 @@ private fun AppContent() {
 
     fun start(item: Item, title: String, url: String, startMs: Long = 0L) {
         if (DemoMode.active) return   // sample entries have no stream address
+        LangScan.stop()   // the language check holds a provider connection: free it for playback
         History.add(ctx, item.id)
         val sm = SE_RE.find(title)
         val season = sm?.groupValues?.get(1)?.toIntOrNull() ?: 0
@@ -441,7 +442,7 @@ private fun AppContent() {
         }
     }
 
-    BoxWithConstraints(Modifier.fillMaxSize().background(Bg).fitScreenInset(playing == null)) {
+    BoxWithConstraints(Modifier.fillMaxSize().holeBackground(Bg).fitScreenInset(playing == null)) {
         // Scale of the design from the available width (see Design)
         val dk = maxWidth.value / Design.WIDTH
         SideEffect { if (Design.k != dk) Design.k = dk }

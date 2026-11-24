@@ -62,12 +62,12 @@ fun LiveInfoBlock(item: Item?, title: String, number: Int, epg: List<EpgEntry>, 
             contentAlignment = Alignment.Center
         ) {
             if (logo != null) AsyncImage(logo, null, Modifier.fillMaxSize().padding(8.dp), contentScale = ContentScale.Fit)
-            else Text(raw = true, text = title.take(2).uppercase(), color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.ExtraBold)
+            else Text(raw = true, text = ShowName.of(title).take(2).uppercase(), color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.ExtraBold)
         }
         Column(Modifier.widthIn(max = 760.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 if (number > 0) Text("$number", color = Accent2, fontSize = 22.sp, fontWeight = FontWeight.Bold, style = TNUM)
-                Text(raw = true, text = title, color = Color.White, fontSize = 26.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(raw = true, text = ShowName.of(title), color = Color.White, fontSize = 26.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             if (nowE != null) {
                 val frac = ((System.currentTimeMillis() / 1000 - nowE.start).toFloat() / (nowE.end - nowE.start).coerceAtLeast(1)).coerceIn(0f, 1f)
@@ -111,14 +111,14 @@ fun LiveBanner(item: Item?, title: String, number: Int, epg: List<EpgEntry>, mod
                 contentAlignment = Alignment.Center
             ) {
                 if (logo != null) AsyncImage(logo, null, Modifier.fillMaxSize().padding(8.dp), contentScale = ContentScale.Fit)
-                else Text(raw = true, text = title.take(2).uppercase(), color = Color.White, fontSize = 26.sp, fontWeight = FontWeight.ExtraBold)
+                else Text(raw = true, text = ShowName.of(title).take(2).uppercase(), color = Color.White, fontSize = 26.sp, fontWeight = FontWeight.ExtraBold)
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("LIVE", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold,
                         modifier = Modifier.clip(RoundedCornerShape(50)).background(Color(0xFFE5484D)).padding(horizontal = 12.dp, vertical = 3.dp))
                     if (number > 0) Text("$number", color = Accent2, fontSize = 22.sp, fontWeight = FontWeight.Bold, style = TNUM)
-                    Text(raw = true, text = title, color = Color.White, fontSize = 26.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                    Text(raw = true, text = ShowName.of(title), color = Color.White, fontSize = 26.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
                     item?.quality?.takeIf { it.isNotBlank() }?.let {
                         Text(raw = true, text = it, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold,
                             modifier = Modifier.clip(RoundedCornerShape(6.dp)).background(Color(0x40FFFFFF)).padding(horizontal = 8.dp, vertical = 2.dp))
@@ -295,13 +295,13 @@ fun ChannelOverlay(
                     Box(Modifier.size(54.dp).clip(RoundedCornerShape(DS.RadiusS)).background(Color(0x24FFFFFF)), contentAlignment = Alignment.Center) {
                         val lg = fc.logo
                         if (lg != null) AsyncImage(lg, null, Modifier.fillMaxSize().padding(8.dp), contentScale = ContentScale.Fit)
-                        else Text(raw = true, text = fc.title.take(2).uppercase(), color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
+                        else Text(raw = true, text = ShowName.of(fc.title).take(2).uppercase(), color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
                     }
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
                         if (nowE != null) {
                             val frac = ((System.currentTimeMillis() / 1000 - nowE.start).toFloat() / (nowE.end - nowE.start).coerceAtLeast(1)).coerceIn(0f, 1f)
                             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                                Text(raw = true, text = fc.title, color = Muted, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                                Text(raw = true, text = ShowName.of(fc.title), color = Muted, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
                                 Text("${hhmm(nowE.start)}–${hhmm(nowE.end)}", color = Accent2, fontSize = 14.sp, fontWeight = FontWeight.Bold, style = TNUM)
                             }
                             Text(raw = true, text = nowE.title, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -312,7 +312,7 @@ fun ChannelOverlay(
                                 Text(raw = true, text = nowE.desc, color = Tok.TextMid, fontSize = 15.sp, lineHeight = 19.sp, maxLines = 6, overflow = TextOverflow.Ellipsis)
                             }
                         } else {
-                            Text(raw = true, text = fc.title, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(raw = true, text = ShowName.of(fc.title), color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             Text("Kein Programm für diesen Sender", color = Muted, fontSize = 15.sp)
                         }
                     }
@@ -402,7 +402,7 @@ private fun ChannelRow(item: Item, current: Boolean, modifier: Modifier, onFocus
                 Box(Modifier.fillMaxWidth().height(3.dp).clip(RoundedCornerShape(50)).background(if (f) Color(0x26000000) else DS.Overlay3)) {
                     Box(Modifier.fillMaxWidth(frac).fillMaxHeight().background(Accent1))
                 }
-            } else Text(raw = true, text = item.group, color = if (f) PT.InkSoft else Muted, fontSize = 13.sp, maxLines = 1)
+            } else Text(raw = true, text = ShowName.of(item.group), color = if (f) PT.InkSoft else Muted, fontSize = 13.sp, maxLines = 1)
         }
         if (Catchup.version >= 0 && Catchup.has(item)) AppIcon(AIcon.Catchup, if (f) PT.InkSoft else Accent2, size = 18.dp)
         if (DeadLinks.isDead(item.url)) AppIcon(AIcon.Warning, if (f) PT.InkSoft else PT.Gold, size = 18.dp)
@@ -454,8 +454,8 @@ private fun RecentChannelChip(item: Item, onLabel: (String) -> Unit, onClick: ()
         Box(Modifier.size(30.dp), contentAlignment = Alignment.Center) {
             val lg = item.logo
             if (lg != null) AsyncImage(lg, null, Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
-            else Text(raw = true, text = item.title.take(2).uppercase(), color = if (f) Color.Black else Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            else Text(raw = true, text = ShowName.of(item.title).take(2).uppercase(), color = if (f) Color.Black else Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
         }
-        Text(raw = true, text = item.title, color = if (f) Color.Black else Color.White, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(raw = true, text = ShowName.of(item.title), color = if (f) Color.Black else Color.White, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }

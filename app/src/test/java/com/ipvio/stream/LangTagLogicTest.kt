@@ -54,4 +54,25 @@ class LangTagLogicTest {
         assertEquals("IT - Welcome to Derry", LangTagLogic.stripDashTag("IT - Welcome to Derry"))
         assertEquals("Spider-Man", LangTagLogic.stripDashTag("Spider-Man"))
     }
+
+    @Test
+    fun stripLeadingTag_onlyKnownCodes() {
+        assertEquals("TVN HD", LangTagLogic.stripLeadingTag("PL: TVN HD"))
+        assertEquals("TVN", LangTagLogic.stripLeadingTag("|PL| TVN"))
+        assertEquals("Polsat Sport", LangTagLogic.stripLeadingTag("[PL] Polsat Sport"))
+        assertEquals("CANAL+ Sport", LangTagLogic.stripLeadingTag("PL | CANAL+ Sport"))
+        assertEquals("TVP 1", LangTagLogic.stripLeadingTag("PL - TVP 1"))
+        assertEquals("TVN: Fakty", LangTagLogic.stripLeadingTag("TVN: Fakty"))
+        assertEquals("IT – Welcome to Derry", LangTagLogic.stripLeadingTag("IT – Welcome to Derry"))
+        assertEquals("PL:", LangTagLogic.stripLeadingTag("PL:"))
+    }
+
+    @Test
+    fun stripLeadingTag_withProviderWords() {
+        assertEquals("CINEMAX 2 RAW", LangTagLogic.stripLeadingTag("PL VIP: CINEMAX 2 RAW"))
+        assertEquals("TVN", LangTagLogic.stripLeadingTag("PL RAW | TVN"))
+        assertEquals("TVN 7", LangTagLogic.stripLeadingTag("|PL HD| TVN 7"))
+        assertEquals("VIP: TVN", LangTagLogic.stripLeadingTag("VIP: TVN"))
+        assertEquals("PL VIP:", LangTagLogic.stripLeadingTag("PL VIP:"))
+    }
 }

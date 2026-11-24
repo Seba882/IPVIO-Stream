@@ -119,6 +119,12 @@ object LangTagLogic {
     /** Abbreviations that are also English words ("IT – Welcome to Derry", "Us - …"): valid only with | : or brackets. */
     private val WORDLIKE = setOf("IT", "US", "AT", "UK", "DE", "ES")
 
+    /** Country code followed by provider words (VIP, RAW, HD …) and a separator: only for [stripLeadingTag]. */
+    private val PACK_START = Regex(
+        """^\W*([A-Za-z]{2,4})(?:\s+(?:VIP|PREMIUM|PRO|PLUS|EXTRA|HD|FHD|UHD|4K|8K|SD|HQ|LQ|RAW|HEVC|H265|BACKUP|MULTI|ONLY|TV)){1,3}\s*(?:[|:\]]|[-–]\s)""",
+        RegexOption.IGNORE_CASE
+    )
+
     private val DASH_TAG = Regex("""^\s*([A-Za-z]{2,4})\s*[-–]\s+""")
 
     /** Removes a language tag with a dash at the start ("EN - Title" → "Title") so title and TMDB search are clean. */
@@ -126,6 +132,27 @@ object LangTagLogic {
         val m = DASH_TAG.find(name) ?: return name
         val code = m.groupValues[1].uppercase()
         return if (code in CODES && code !in WORDLIKE) name.substring(m.range.last + 1) else name
+    }
+
+    /**
+     * Removes a leading country / language tag for display ("PL: TVN HD", "|PL| TVN", "[PL] TVN", "PL | TVN", "PL - TVN" → "TVN HD"/"TVN").
+     * Only known codes; with a dash not the codes that are also words ("IT – Welcome to Derry" stays). Never returns an empty name.
+     */
+    fun stripLeadingTag(name: String): String {
+        // "PL VIP: TVN", "PL RAW | TVN", "|PL HD| TVN": the code may carry words of the provider before the separator
+        PACK_START.find(name)?.let { m ->
+            if (m.groupValues[1].uppercase() in CODES) {
+                val rest = name.substring(m.range.last + 1).trimStart(' ', '|', ':', '-', '–', ']', ')')
+                if (rest.isNotBlank()) return rest
+            }
+        }
+        val m = TAG_START.find(name) ?: return name
+        val code = m.groupValues[1].uppercase()
+        if (code !in CODES) return name
+        val dash = m.groupValues[2].trim().let { it == "-" || it == "–" }
+        if (dash && code in WORDLIKE) return name
+        val rest = name.substring(m.range.last + 1).trimStart(' ', '|', ':', '-', '–', ']', ')')
+        return if (rest.isBlank()) name else rest
     }
 
     /** Language from an explicit tag in the (uncleaned) movie or series title, otherwise null. */

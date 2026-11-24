@@ -108,11 +108,11 @@ fun LiveNowPanel(ch: Item?, modifier: Modifier = Modifier, compact: Boolean = fa
         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(dpx(if (compact) 8 else 18))) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(dpx(14))) {
                 LiveBadge()
-                Text(raw = true, text = c.title + (nowE?.let { "  ·  " + hhmm(it.start) + " – " + hhmm(it.end) } ?: ""),
+                Text(raw = true, text = ShowName.of(c.title) + (nowE?.let { "  ·  " + hhmm(it.start) + " – " + hhmm(it.end) } ?: ""),
                     color = Tok.TextMid, fontSize = spx(if (compact) 16 else 20), maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             // Compact (channel search): smaller title and a short description so the input field above the keyboard has room
-            Text(raw = true, text = nowE?.title ?: c.title, color = Tok.TextHi,
+            Text(raw = true, text = nowE?.title ?: ShowName.of(c.title), color = Tok.TextHi,
                 fontSize = spx(if (compact) 34 else 68), lineHeight = spx(if (compact) 36 else 70),
                 fontWeight = FontWeight.ExtraBold, letterSpacing = (if (compact) -0.5 else -1.2).sp,
                 maxLines = if (compact) 1 else 2, overflow = TextOverflow.Ellipsis)

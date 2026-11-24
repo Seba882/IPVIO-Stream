@@ -423,24 +423,74 @@ object PlaylistStore {
     }
 
     /** Playlists for transfer to another device (plain text – only via the code-protected route). */
-    fun exportLists(c: Context): JSONArray {
+    /**
+     * Playlists for a backup or transfer. [fileBudget] > 0: playlists loaded from a file are carried along with their
+     * content (gzip + base64, in list order) as long as the total stays within [fileBudget] characters; larger ones are
+     * marked "fileSkipped" so the restore can say so. With 0 (Drive sync) file playlists are left out as before.
+     */
+    fun exportLists(c: Context, fileBudget: Int = 0): JSONArray {
         ensure(c)
         val a = JSONArray()
+        var left = fileBudget
         for (l in lists) {
             val o = JSONObject().put("name", l.name).put("url", l.url)
             backups(c, l.url).takeIf { it.isNotEmpty() }?.let { o.put("backups", JSONArray(it)) }
+            if (l.url.startsWith("file://")) {
+                if (fileBudget <= 0) continue
+                val packed = runCatching { packFile(l.url, left) }.getOrNull()
+                if (packed != null) { o.put("file", packed); left -= packed.length }
+                else { o.put("fileSkipped", true); Diag.report("Backup: playlist file \"${l.name}\" too big, not included") }
+            }
             a.put(o)
         }
         return a
     }
 
-    /** Add transferred playlists (existing addresses stay as they are). Without an active list the first becomes active. */
-    fun importLists(c: Context, a: JSONArray) {
+    /** gzip + base64 of a playlist file, or null if it is missing or the result would exceed [max] characters. */
+    private fun packFile(url: String, max: Int): String? {
+        val f = File(android.net.Uri.parse(url).path ?: return null)
+        if (!f.isFile || max <= 0) return null
+        // Rough bound first: M3U text packs well, but a file 12 times the budget will not fit
+        if (f.length() > max.toLong() * 12) return null
+        val bos = java.io.ByteArrayOutputStream()
+        GZIPOutputStream(bos).use { z -> f.inputStream().use { it.copyTo(z) } }
+        val b64 = android.util.Base64.encodeToString(bos.toByteArray(), android.util.Base64.NO_WRAP)
+        return if (b64.length <= max) b64 else null
+    }
+
+    /** Writes a carried playlist file into the import folder; returns its address or null if it is not a playlist. */
+    private fun unpackFile(c: Context, name: String, b64: String): String? {
+        val bytes = android.util.Base64.decode(b64, android.util.Base64.NO_WRAP)
+        val tmp = File(ImportFiles.tmpDir(c), "restore_" + System.currentTimeMillis())
+        return try {
+            GZIPInputStream(bytes.inputStream()).use { z -> tmp.outputStream().use { z.copyTo(it) } }
+            ImportFiles.save(c, name, tmp)
+        } finally {
+            tmp.delete()
+        }
+    }
+
+    /**
+     * Add transferred playlists (existing addresses stay as they are). Without an active list the first becomes active.
+     * Playlists from a file come back only if the backup carries the file (see [exportLists]); one with the same name is
+     * not added twice. Returns the number of file playlists that could not be restored.
+     */
+    fun importLists(c: Context, a: JSONArray): Int {
         ensure(c)
+        var missed = 0
         for (i in 0 until a.length()) {
             val o = a.optJSONObject(i) ?: continue
             val u = PlaylistLogic.normalizeUrl(o.optString("url")) ?: continue
-            if (u.startsWith("file://")) continue   // files exist only on the old device
+            if (u.startsWith("file://")) {
+                // The file path exists only on the old device: restore from the carried content, if any
+                val name = o.optString("name").ifBlank { "Playlist" }
+                if (lists.any { it.name == name && it.url.startsWith("file://") }) continue
+                val b64 = o.optString("file")
+                val nu = if (b64.isNotEmpty()) runCatching { unpackFile(c, name, b64) }.getOrNull() else null
+                if (nu == null) { missed++; Diag.report("Restore: playlist file \"$name\" not in the backup"); continue }
+                lists.add(PL(name, nu))
+                continue
+            }
             if (lists.none { it.url == u }) {
                 lists.add(PL(o.optString("name").ifBlank { hostOf(u) }, u))
                 o.optJSONArray("backups")?.let { b -> setBackups(c, u, (0 until b.length()).map { b.optString(it) }) }
@@ -451,6 +501,7 @@ object PlaylistStore {
         syncFailover(c)
         // Write to disk immediately (the app restarts right away)
         prefs(c).edit().commit()
+        return missed
     }
 
     fun hostOf(url: String): String {
@@ -583,6 +634,36 @@ object PlaylistStore {
     fun rename(c: Context, i: Int, name: String) {
         ensure(c)
         if (i in lists.indices && name.isNotBlank()) { lists[i] = PL(name.trim(), lists[i].url); persist(c) }
+    }
+
+    /**
+     * New address for a playlist (another server, new login). Settings kept with the address (content mode, refresh plan,
+     * backup servers, "shown additionally") move to the new one; the stored copy of the old address is deleted, so the
+     * next load fetches the playlist from the new address. Returns false for an invalid address, a playlist file or an
+     * address another playlist already has. The caller reloads the playlist if it is the main one.
+     */
+    fun changeUrl(c: Context, i: Int, raw: String): Boolean {
+        ensure(c)
+        if (i !in lists.indices) return false
+        val old = lists[i].url
+        val nu = PlaylistLogic.normalizeUrl(raw) ?: return false
+        if (nu == old) return true
+        if (old.startsWith("file://") || nu.startsWith("file://") || lists.any { it.url == nu }) return false
+        val mode = PlaylistMode.get(c, old)
+        val refresh = PlaylistRefresh.get(c, old)
+        val bk = backups(c, old)
+        lists[i] = PL(lists[i].name, nu)
+        PlaylistMode.set(c, nu, mode)
+        PlaylistRefresh.set(c, nu, refresh)
+        PlaylistRefresh.clear(c, old)
+        prefs(c).edit().remove(backupKey(old)).apply()
+        if (bk.isNotEmpty()) setBackups(c, nu, bk)
+        if (key(old) in multi) multi = multi - key(old) + key(nu)
+        extras.remove(old)
+        deleteFiles(c, old)
+        persist(c)
+        syncFailover(c)
+        return true
     }
 
     fun remove(c: Context, i: Int) {
