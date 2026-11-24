@@ -133,7 +133,8 @@ class PhoneImportTest {
         assertFalse(PhoneImportLogic.page(1).contains("id=\"vf\""))
         val withVpn = PhoneImportLogic.page(1, PhoneImportLogic.Features(vpn = true))
         assertTrue(withVpn.contains("id=\"vf\""))
-        assertTrue(withVpn.contains("fetch('/vpn?code="))
+        // Sent with XMLHttpRequest (progress bar while sending), not fetch
+        assertTrue(withVpn.contains("'/vpn?code='"))
         assertTrue(withVpn.contains("WireGuard configuration (VPN)"))
     }
 }

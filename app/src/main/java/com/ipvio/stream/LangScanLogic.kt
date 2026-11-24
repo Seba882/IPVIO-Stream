@@ -15,7 +15,7 @@ object LangScanLogic {
 
     private val iso3to1: Map<String, String> by lazy {
         val m = HashMap<String, String>()
-        for (two in Locale.getISOLanguages()) runCatching { m[Locale(two).isO3Language.lowercase()] = two }
+        for (two in Locale.getISOLanguages()) runCatching { m[Locale.forLanguageTag(two).isO3Language.lowercase()] = two }
         // Bibliographic codes that differ from the terminology codes Java knows
         m.putAll(mapOf("ger" to "de", "fre" to "fr", "dut" to "nl", "cze" to "cs", "gre" to "el", "chi" to "zh", "per" to "fa", "rum" to "ro", "slo" to "sk", "alb" to "sq", "arm" to "hy", "baq" to "eu", "bur" to "my", "geo" to "ka", "ice" to "is", "mac" to "mk", "mao" to "mi", "may" to "ms", "tib" to "bo", "wel" to "cy", "scc" to "sr", "scr" to "hr"))
         m
