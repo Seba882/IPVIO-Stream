@@ -6,5 +6,19 @@ package com.ipvio.stream
  * EPG matching and channel bundling keep the provider's names.
  */
 object ShowName {
-    fun of(name: String): String = if (General.hidePrefix) LangTagLogic.stripLeadingTag(name) else name
+    // Order: the user's own texts first ("PL VIP:", " RAW"), then the automatic country tag
+    @Volatile private var cacheRaw: String? = null
+    @Volatile private var cache: List<String> = emptyList()
+
+    /** The user's own texts to remove (settings), parsed once per change. */
+    private fun own(): List<String> {
+        val raw = General.removeTexts
+        if (raw != cacheRaw) { cache = NameCleanLogic.parse(raw); cacheRaw = raw }
+        return cache
+    }
+
+    fun of(name: String): String {
+        val n = NameCleanLogic.apply(name, own())
+        return if (General.hidePrefix) LangTagLogic.stripLeadingTag(n) else n
+    }
 }

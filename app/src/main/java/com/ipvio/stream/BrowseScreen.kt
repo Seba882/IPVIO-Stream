@@ -220,6 +220,12 @@ var restoreIdx by remember { mutableIntStateOf(state.focused) }
     }
     val list = listOrNull.orEmpty()
     val ready = listOrNull != null
+    // The list with every other filter (sort, rating, year, genre, language tag …) but without the track filter: the
+    // language check works on exactly the titles shown, not on the whole section (which can be tens of thousands)
+    val untracked = key.copy(tracks = false, scanVer = 0)
+    val scanBase by produceState<List<Item>?>(null, req, untracked, state.tracks, listOrNull) {
+        value = if (!state.tracks) listOrNull else withContext(Dispatchers.Default) { filterAndSort(req.items, untracked) }
+    }
 
     LaunchedEffect(ready) {
         if (!ready) return@LaunchedEffect
@@ -315,8 +321,11 @@ var restoreIdx by remember { mutableIntStateOf(state.focused) }
                     // Audio / subtitle languages read from the files (movies): filter by the app language, or start the check
                     if (browseKind == Kind.MOVIE) item {
                         val langName = I18nCore.NATIVE.getOrElse(I18nCore.CODES.indexOf(uiLang)) { uiLang }
-                        val checked = remember(req, LangScan.version) { LangScan.checked(ctx, req.items) }
-                        val check = Lang.tr("Sprachen prüfen") + " (" + checked + "/" + req.items.size + ")"
+                        val base = scanBase.orEmpty()
+                        val checked = remember(base, LangScan.version) { LangScan.checked(ctx, base) }
+                        // While a check runs, the same entry stops it
+                        val check = if (LangScan.running) Lang.tr("Prüfung anhalten")
+                            else Lang.tr("Sprachen prüfen") + " (" + checked + "/" + base.size + ")"
                         val to = listOf(Lang.tr("Alle"), langName + ": " + Lang.tr("Ton oder Untertitel"), check)
                         val value = if (LangScan.running) Lang.tr("Sprachen werden geprüft") + " " + LangScan.done + "/" + LangScan.total
                             else to[if (state.tracks) 1 else 0]
@@ -324,7 +333,10 @@ var restoreIdx by remember { mutableIntStateOf(state.focused) }
                             when (it) {
                                 0 -> state.tracks = false
                                 1 -> state.tracks = true
-                                else -> { LangScan.start(ctx, req.items); state.tracks = true }
+                                else -> when {
+                                    LangScan.running -> LangScan.stop()
+                                    scanBase != null -> { LangScan.start(ctx, base); state.tracks = true }
+                                }
                             }
                         }
                     }

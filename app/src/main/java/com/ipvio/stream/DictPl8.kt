@@ -256,4 +256,7 @@ Laden · {0}¦Pobierz · {0}
 Download gestartet: {0}¦Rozpoczęto pobieranie: {0}
 {0} Folgen in der Warteschlange¦Odcinki w kolejce: {0}
 WireGuard-Konfiguration (VPN)¦Konfiguracja WireGuard (VPN)
+Prüfung anhalten¦Zatrzymaj sprawdzanie
+Eigene Texte entfernen, z. B. PL VIP:, VIP |, RAW¦Własne teksty do usunięcia, np. PL VIP:, VIP |, RAW
+Mit Komma trennen. Ein Text wird am Anfang oder am Ende eines Namens entfernt (Groß- und Kleinschreibung egal). Nur die Anzeige ändert sich.¦Oddziel przecinkami. Tekst jest usuwany na początku lub na końcu nazwy (wielkość liter nie ma znaczenia). Zmienia się tylko wyświetlanie.
 """

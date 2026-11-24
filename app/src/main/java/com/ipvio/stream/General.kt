@@ -32,6 +32,8 @@ object General {
     var trailerHome by mutableStateOf(false)
     /** Channel and category names without a leading country tag ("PL: TVN" → "TVN"), display only (default off). */
     var hidePrefix by mutableStateOf(false)
+    /** The user's own texts removed from channel and category names, comma or line separated (display only). */
+    var removeTexts by mutableStateOf("")
     /** W-002: "Movies" / "Series" in the sidebar open the categories screen right away instead of their home page. */
     var vodCats by mutableStateOf(false)
     /** Live TV: show the quality variants of one channel (8K/4K/FHD/HD/SD) as a single row. */
@@ -136,6 +138,7 @@ object General {
         trailerPreview = p.getBoolean("trailer_preview", true)
         trailerHome = p.getBoolean("trailer_home", false)
         hidePrefix = p.getBoolean("hide_prefix", false)
+        removeTexts = p.getString("remove_texts", "").orEmpty()
         vodCats = p.getBoolean("vod_cats", false)
         bundleLive = p.getBoolean("bundle_live", true)
         channelRowSize = p.getInt("channel_row_size", 1).coerceIn(0, 2)
@@ -189,6 +192,7 @@ object General {
     fun setKeepAwakeBrowse(c: Context, v: Boolean) { keepAwakeBrowse = v; prefs(c).edit().putBoolean("keep_awake_browse", v).apply() }
     fun setTrailerPreview(c: Context, v: Boolean) { trailerPreview = v; prefs(c).edit().putBoolean("trailer_preview", v).apply() }
     fun setHidePrefix(c: Context, v: Boolean) { hidePrefix = v; prefs(c).edit().putBoolean("hide_prefix", v).apply() }
+    fun setRemoveTexts(c: Context, v: String) { removeTexts = v.take(500); prefs(c).edit().putString("remove_texts", removeTexts).apply() }
     fun setTrailerHome(c: Context, v: Boolean) { trailerHome = v; prefs(c).edit().putBoolean("trailer_home", v).apply() }
     fun setPlan(c: Context, mode: Int = refreshMode, interval: Int = refreshInterval, hour: Int = refreshHour, minute: Int = refreshMinute, dow: Int = refreshDow) {
         refreshMode = mode.coerceIn(0, 4); refreshInterval = interval.coerceIn(1, 168)

@@ -39,4 +39,7 @@ Tonspuren¦المسارات الصوتية
 Ton oder Untertitel¦صوت أو ترجمة
 Sprachen prüfen¦فحص اللغات
 Sprachen werden geprüft¦جارٍ فحص اللغات
+Prüfung anhalten¦إيقاف الفحص
+Eigene Texte entfernen, z. B. PL VIP:, VIP |, RAW¦إزالة نصوص خاصة، مثل PL VIP:, VIP |, RAW
+Mit Komma trennen. Ein Text wird am Anfang oder am Ende eines Namens entfernt (Groß- und Kleinschreibung egal). Nur die Anzeige ändert sich.¦افصل بفواصل. تتم إزالة النص في بداية الاسم أو نهايته (لا يهم حجم الأحرف). يتغير العرض فقط.
 """
