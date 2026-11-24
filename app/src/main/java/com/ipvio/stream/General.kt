@@ -134,7 +134,7 @@ object General {
         confirmExit = p.getBoolean("confirm_exit", true)
         keepAwakeBrowse = p.getBoolean("keep_awake_browse", false)
         trailerPreview = p.getBoolean("trailer_preview", true)
-        trailerMode = p.getInt("trailer_mode_test", 0).coerceIn(0, 2)
+        trailerMode = p.getInt("trailer_mode_test", 0).coerceIn(0, 3)
         hidePrefix = p.getBoolean("hide_prefix", false)
         vodCats = p.getBoolean("vod_cats", false)
         bundleLive = p.getBoolean("bundle_live", true)
@@ -189,7 +189,7 @@ object General {
     fun setKeepAwakeBrowse(c: Context, v: Boolean) { keepAwakeBrowse = v; prefs(c).edit().putBoolean("keep_awake_browse", v).apply() }
     fun setTrailerPreview(c: Context, v: Boolean) { trailerPreview = v; prefs(c).edit().putBoolean("trailer_preview", v).apply() }
     fun setHidePrefix(c: Context, v: Boolean) { hidePrefix = v; prefs(c).edit().putBoolean("hide_prefix", v).apply() }
-    fun setTrailerMode(c: Context, v: Int) { trailerMode = v.coerceIn(0, 2); prefs(c).edit().putInt("trailer_mode_test", trailerMode).apply() }
+    fun setTrailerMode(c: Context, v: Int) { trailerMode = v.coerceIn(0, 3); prefs(c).edit().putInt("trailer_mode_test", trailerMode).apply() }
     fun setPlan(c: Context, mode: Int = refreshMode, interval: Int = refreshInterval, hour: Int = refreshHour, minute: Int = refreshMinute, dow: Int = refreshDow) {
         refreshMode = mode.coerceIn(0, 4); refreshInterval = interval.coerceIn(1, 168)
         refreshHour = hour.coerceIn(0, 23); refreshMinute = minute.coerceIn(0, 59); refreshDow = dow.coerceIn(1, 7)

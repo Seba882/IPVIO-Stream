@@ -139,7 +139,7 @@ fun Guide(
     var showSettings by remember { mutableStateOf(false) }
     var showSearch by remember { mutableStateOf(false) }
     // Categories on the left (as in the design): current list, all channels, favorites, own lists, provider groups
-    val cats = remember(list, all, Library.favs.size, ChannelLists.lists.size) { guideCategories(list, all) }
+    val cats = remember(list, all, Library.favs.size, ChannelLists.lists.size, AppSettings.ipvioFilter) { guideCategories(list, all) }
     var catIdx by remember { mutableIntStateOf(0) }
     val shown = cats.getOrNull(catIdx)?.items ?: list
     val catReq = remember { FocusRequester() }
@@ -399,7 +399,11 @@ private val BlockLine = Color(0xFF2A2F3B)
 /** A category on the left in the TV guide. */
 class GuideCat(val name: String, val items: List<Item>, val icon: AIcon?)
 
-/** Categories for the TV guide: current list (if different from all), all channels, favorites, own lists, groups. */
+/**
+ * Categories for the TV guide: current list (if different from all), all channels, favorites, own lists, automatic genres
+ * (as in Live TV: sport, movies, documentaries, kids, news, music), then the provider's groups. With "Automatic genres"
+ * switched on the provider's groups are left out, so only the automatic ones remain.
+ */
 fun guideCategories(list: List<Item>, all: List<Item>): List<GuideCat> {
     val out = ArrayList<GuideCat>()
     val allIds = all.size
@@ -412,6 +416,9 @@ fun guideCategories(list: List<Item>, all: List<Item>): List<GuideCat> {
         val items = l.ids.mapNotNull { byId[it] }
         if (items.isNotEmpty()) out.add(GuideCat(l.name, items, AIcon.Lists))
     }
+    // Genre labels are the app's own words (translated): they get an icon, provider groups none
+    for ((k, l) in LiveGenre.split(all)) LiveGenre.byKey(k)?.let { out.add(GuideCat(it.label, l, AIcon.Live)) }
+    if (AppSettings.ipvioFilter) return out
     val groups = LinkedHashMap<String, ArrayList<Item>>()
     for (it in all) groups.getOrPut(it.group) { ArrayList() }.add(it)
     if (groups.size > 1) for ((g, l) in groups) out.add(GuideCat(g, l, null))

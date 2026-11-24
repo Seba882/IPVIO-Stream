@@ -520,7 +520,7 @@ private fun GeneralPage(ctx: Context) {
     ToggleRow("Trailer automatisch abspielen", "Auf der Detailseite startet der Trailer nach 2 Sekunden hinter dem Titel, solange die Knöpfe oben ausgewählt sind. Braucht einen TMDB-Schlüssel.", General.trailerPreview) { General.setTrailerPreview(ctx, it) }
     ToggleRow("Länderkürzel in Namen ausblenden", "Zeigt Sender und Kategorien ohne Kürzel am Anfang, z. B. „PL: TVN HD“ als „TVN HD“. Nur die Anzeige ändert sich, Favoriten, Verlauf und Suche bleiben gleich.", General.hidePrefix) { General.setHidePrefix(ctx, it) }
     if (General.trailerPreview) {
-        val tm = listOf("Trailer-Bild: wie bisher", "Trailer-Bild: durchsichtiges Fenster", "Trailer-Bild: Fenster mit Loch")
+        val tm = listOf("Trailer-Bild: wie bisher", "Trailer-Bild: durchsichtiges Fenster", "Trailer-Bild: Fenster mit Loch", "Trailer-Bild: eigene Ansicht")
         SelectRow("Trailer-Bild (Test)", tm[General.trailerMode], tm, General.trailerMode) { General.setTrailerMode(ctx, it) }
     }
     // Phone/tablet: landscape (the UI is built for the TV)
