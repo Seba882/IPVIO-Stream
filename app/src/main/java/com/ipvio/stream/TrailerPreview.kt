@@ -178,7 +178,10 @@ fun TrailerPreview(key: String?, active: Boolean, modifier: Modifier = Modifier,
                 val old = w.layoutParams as? FrameLayout.LayoutParams
                 if (old != null && (old.width != lp.width || old.height != lp.height || old.leftMargin != lp.leftMargin || old.topMargin != lp.topMargin)) w.layoutParams = lp
             })
-            SideEffect { TrailerHole.rect = if (shown) box else null }
+            // Read in composition (not only inside SideEffect), so a change of "shown" or of the place recomposes and the hole follows
+            val hole = if (shown) box else null
+            SideEffect { TrailerHole.rect = hole }
+            LaunchedEffect(hole != null) { if (hole != null) Diag.report("Trailer preview: picture shown (way ${n + 1})") }
         }
     }
 }
