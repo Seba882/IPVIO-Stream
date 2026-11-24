@@ -118,4 +118,11 @@ class TrailerLogicTest {
         assertFalse(TrailerLogic.isEnded(null))
         assertTrue(TrailerLogic.PREVIEW_DELAY_MS == 2_000L)
     }
+
+    @Test
+    fun codecScript_andDiagLine() {
+        assertTrue(TrailerLogic.codecScript(true).contains("var force=true"))
+        assertTrue(TrailerLogic.codecScript(false).contains("var force=false"))
+        assertTrue(TrailerLogic.diagLine("IPVIO_TRAILER_CODEC video/mp4; codecs=\"avc1.4d401f\"")!!.startsWith("Trailer: codec video/mp4"))
+    }
 }

@@ -97,9 +97,30 @@ object TrailerLogic {
     private val INFO_LINE = Regex("^IPVIO_TRAILER_INFO t=(\\d{1,5}(?:\\.\\d)?) v=(\\d{1,3}) m=([01]) q=([a-z0-9]{1,10})$")
 
     /** Diagnose line for a WebView console message of the embed page, or null for any other message. */
+    /** Console prefix of [codecScript]: the media type the YouTube player asked for (shows VP9 / AV1 / H.264). */
+    const val CODEC_PREFIX = "IPVIO_TRAILER_CODEC "
+
+    /**
+     * Script run at document start in the YouTube frame (androidx.webkit DOCUMENT_START_SCRIPT). It reports each media type
+     * the player opens. [forceH264]: answers "not supported" for VP9, AV1 and WebM, so YouTube falls back to H.264
+     * (TEST for the black picture on TV devices: suspected hardware VP9/AV1 path of the WebView).
+     */
+    fun codecScript(forceH264: Boolean): String =
+        "(function(){try{var re=/vp0?9|av01|webm/i;var force=" + forceH264 + ";" +
+            "if(window.MediaSource){var add=MediaSource.prototype.addSourceBuffer;" +
+            "MediaSource.prototype.addSourceBuffer=function(t){try{console.log('" + CODEC_PREFIX + "'+t)}catch(e){};return add.call(this,t)};" +
+            "if(force&&MediaSource.isTypeSupported){var o=MediaSource.isTypeSupported.bind(MediaSource);" +
+            "MediaSource.isTypeSupported=function(t){return re.test(t)?false:o(t)}}}" +
+            "if(force){var cp=HTMLMediaElement.prototype.canPlayType;HTMLMediaElement.prototype.canPlayType=function(t){return re.test(t)?'':cp.call(this,t)};" +
+            "if(navigator.mediaCapabilities&&navigator.mediaCapabilities.decodingInfo){var d=navigator.mediaCapabilities.decodingInfo.bind(navigator.mediaCapabilities);" +
+            "navigator.mediaCapabilities.decodingInfo=function(c){var ct=(c&&c.video&&c.video.contentType)||'';" +
+            "return re.test(ct)?Promise.resolve({supported:false,smooth:false,powerEfficient:false}):d(c)}}}" +
+            "}catch(e){}})();"
+
     fun diagLine(console: String?): String? {
         if (console == null) return null
         if (console == "IPVIO_TRAILER_LOAD") return "Trailer: iframe loaded"
+        if (console.startsWith(CODEC_PREFIX)) return "Trailer: codec " + console.removePrefix(CODEC_PREFIX).take(80)
         INFO_LINE.matchEntire(console)?.let {
             return "Trailer: info t=${it.groupValues[1]}s vol=${it.groupValues[2]} muted=${it.groupValues[3]} quality=${it.groupValues[4]}"
         }

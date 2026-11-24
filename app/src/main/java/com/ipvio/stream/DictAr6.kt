@@ -24,4 +24,6 @@ Trailer automatisch abspielen¦تشغيل الإعلانات الترويجية 
 Auf der Detailseite startet der Trailer nach 2 Sekunden hinter dem Titel, solange die Knöpfe oben ausgewählt sind. Braucht einen TMDB-Schlüssel.¦في صفحة التفاصيل يبدأ الإعلان الترويجي خلف العنوان بعد ثانيتين ما دامت الأزرار العلوية محددة. يتطلب مفتاح TMDB.
 Länderkürzel in Namen ausblenden¦إخفاء رمز البلد في الأسماء
 Zeigt Sender und Kategorien ohne Kürzel am Anfang, z. B. „PL: TVN HD“ als „TVN HD“. Nur die Anzeige ändert sich, Favoriten, Verlauf und Suche bleiben gleich.¦يعرض القنوات والفئات بدون الرمز في البداية، مثل «PL: TVN HD» كـ«TVN HD». يتغير العرض فقط، وتبقى المفضلة والسجل والبحث كما هي.
+Musiksender¦موسيقى
+Weitere Sender¦قنوات أخرى
 """

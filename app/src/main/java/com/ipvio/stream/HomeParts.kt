@@ -469,7 +469,7 @@ fun ChannelNowCard(item: Item, modifier: Modifier, onClick: () -> Unit) {
         Row(Modifier.weight(1f).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(dpx(12))) {
             Box(Modifier.size(dpx(58)), contentAlignment = Alignment.Center) {
                 if (item.logo != null) AsyncImage(item.logo, item.title, Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
-                else Text(raw = true, text = item.title.take(3).uppercase(), color = Color.White, fontSize = spx(22), fontWeight = FontWeight.ExtraBold)
+                else Text(raw = true, text = ShowName.of(item.title).take(3).uppercase(), color = Color.White, fontSize = spx(22), fontWeight = FontWeight.ExtraBold)
                 if (Library.isFav(item.id)) AppIcon(AIcon.Star, DS.Gold, Modifier.align(Alignment.TopEnd), dpx(14))
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(dpx(2))) {
@@ -900,7 +900,7 @@ fun ChannelDetailCard(item: Item, modifier: Modifier, reorder: List<Item>? = nul
         Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(dpx(16))) {
             Box(Modifier.size(dpx(78)).clip(RoundedCornerShape(dpx(10))).background(Color(0x1FFFFFFF)).padding(dpx(8)), contentAlignment = Alignment.Center) {
                 if (item.logo != null) AsyncImage(item.logo, item.title, Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
-                else Text(raw = true, text = item.title.take(3).uppercase(), color = Color.White, fontSize = spx(22), fontWeight = FontWeight.ExtraBold)
+                else Text(raw = true, text = ShowName.of(item.title).take(3).uppercase(), color = Color.White, fontSize = spx(22), fontWeight = FontWeight.ExtraBold)
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(dpx(4))) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(dpx(8))) {

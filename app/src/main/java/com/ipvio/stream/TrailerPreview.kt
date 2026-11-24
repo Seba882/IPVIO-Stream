@@ -29,6 +29,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.webkit.WebViewCompat
+import androidx.webkit.WebViewFeature
 import kotlinx.coroutines.delay
 
 /** Seconds a way gets to report "playing" before the next way is tried (same rule as the trailer dialog, T-032). */
@@ -113,7 +115,7 @@ fun TrailerPreview(key: String?, active: Boolean, modifier: Modifier = Modifier)
             WebView(c).apply {
                 isFocusable = false
                 isFocusableInTouchMode = false
-                setBackgroundColor(if (mode == 3) android.graphics.Color.BLACK else android.graphics.Color.TRANSPARENT)
+                setBackgroundColor(if (mode == 1 || mode == 2) android.graphics.Color.TRANSPARENT else android.graphics.Color.BLACK)
                 settings.javaScriptEnabled = true
                 settings.domStorageEnabled = true
                 settings.mediaPlaybackRequiresUserGesture = false
@@ -131,6 +133,13 @@ fun TrailerPreview(key: String?, active: Boolean, modifier: Modifier = Modifier)
                         return true
                     }
                 }
+                // Codec report in every mode; mode 5 also hides VP9/AV1 so YouTube sends H.264 (needs DOCUMENT_START_SCRIPT)
+                if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
+                    runCatching {
+                        WebViewCompat.addDocumentStartJavaScript(this, TrailerLogic.codecScript(mode == 4),
+                            setOf("https://www.youtube-nocookie.com", "https://www.youtube.com"))
+                    }.onFailure { Diag.report("Trailer preview: codec script failed (${it.javaClass.simpleName})") }
+                } else Diag.report("Trailer preview: WebView without document start scripts")
                 if (way != null) loadDataWithBaseURL(way.baseUrl, way.html, "text/html", "utf-8", null)
                 holder[0] = this
             }

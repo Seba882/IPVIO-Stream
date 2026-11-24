@@ -45,4 +45,7 @@ Trailer-Bild: Fenster mit Loch¦Tryb 3: okno z dziurą
 Länderkürzel in Namen ausblenden¦Ukryj prefiks kraju w nazwach
 Zeigt Sender und Kategorien ohne Kürzel am Anfang, z. B. „PL: TVN HD“ als „TVN HD“. Nur die Anzeige ändert sich, Favoriten, Verlauf und Suche bleiben gleich.¦Pokazuje kanały i kategorie bez skrótu na początku, np. „PL: TVN HD” jako „TVN HD”. Zmienia się tylko wyświetlanie, ulubione, historia i wyszukiwanie pozostają bez zmian.
 Trailer-Bild: eigene Ansicht¦Tryb 4: poza Compose
+Trailer-Bild: nur H.264¦Tryb 5: wymuś H.264
+Musiksender¦Muzyczne
+Weitere Sender¦Pozostałe kanały
 """

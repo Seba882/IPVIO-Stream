@@ -15,10 +15,29 @@ object LiveGenre {
         Genre("GEN:doku", "Dokumentationen", rx("""documentar\w*|\bdoku\w*|discovery|nat\s?geo|national\s?geographic|\bhistory\b|animal\s?planet|\bdmax\b|nautilus|explore|\bscience\b|dokumentar\w*""")),
         Genre("GEN:kids", "Kinder", rx("""\bkids?\b|kinder|children|cartoon\w*|\bnick\w*|disney|junior|\bbaby\w*|toon\w*|boomerang|ragazzi|çocuk|djeca|dječji|\bkika\b|jetix|\bpogo\b""")),
         Genre("GEN:news", "Nachrichten", rx("""\bnews\b|nachrichten|\bn-?tv\b|\bcnn\b|euronews|al\s?jazeera|tagesschau|\bwelt\b|haber|vijesti|noticias|\bnotizie\b|\binfo(rmation)?\b|\brtl\s?aktuell\b""")),
-        Genre("GEN:music", "Musik", rx("""\bmusic\w*|musik|\bmtv\b|\bvh1\b|\bviva\b|\bklubbing\b|\bradio\b|\bmuzik\w*"""))
+        Genre("GEN:music", "Musiksender", rx("""\bmusic\w*|musik|\bmtv\b|\bvh1\b|\bviva\b|\bklubbing\b|\bradio\b|\bmuzik\w*"""))
     )
 
-    fun byKey(k: String): Genre? = ALL.firstOrNull { it.key == k }
+    /** Channels in none of the genres. Only shown when "Automatic genres" hides the provider's groups. */
+    val OTHER = Genre("GEN:other", "Weitere Sender", null)
+
+    fun byKey(k: String): Genre? = if (k == OTHER.key) OTHER else ALL.firstOrNull { it.key == k }
+
+    /**
+     * Genres as listed in Live TV and the TV guide. [auto] ("Automatic genres" on): the provider's groups are hidden,
+     * so channels in no genre get their own entry [OTHER] (otherwise they would only be under "All channels").
+     */
+    fun listed(live: List<Item>, auto: Boolean): Map<String, List<Item>> {
+        val g = split(live)
+        if (!auto) return g
+        val inGenre = HashSet<String>()
+        for (l in g.values) for (i in l) inGenre.add(i.id)
+        val rest = live.filter { it.id !in inGenre }
+        if (rest.isEmpty()) return g
+        val out = LinkedHashMap(g)
+        out[OTHER.key] = rest
+        return out
+    }
 
     fun isGenreKey(k: String) = k.startsWith("GEN:")
 

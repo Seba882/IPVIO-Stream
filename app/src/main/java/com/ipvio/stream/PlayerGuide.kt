@@ -417,7 +417,7 @@ fun guideCategories(list: List<Item>, all: List<Item>): List<GuideCat> {
         if (items.isNotEmpty()) out.add(GuideCat(l.name, items, AIcon.Lists))
     }
     // Genre labels are the app's own words (translated): they get an icon, provider groups none
-    for ((k, l) in LiveGenre.split(all)) LiveGenre.byKey(k)?.let { out.add(GuideCat(it.label, l, AIcon.Live)) }
+    for ((k, l) in LiveGenre.listed(all, AppSettings.ipvioFilter)) LiveGenre.byKey(k)?.let { out.add(GuideCat(it.label, l, AIcon.Live)) }
     if (AppSettings.ipvioFilter) return out
     val groups = LinkedHashMap<String, ArrayList<Item>>()
     for (it in all) groups.getOrPut(it.group) { ArrayList() }.add(it)
