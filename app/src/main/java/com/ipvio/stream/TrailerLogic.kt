@@ -31,10 +31,10 @@ object TrailerLogic {
      * 0: as before (origin and embed host youtube-nocookie.com); 1: origin of the app, embed host nocookie;
      * 2: origin of the app, embed host youtube.com.
      */
-    fun attempt(n: Int, key: String?, preview: Boolean = false): Attempt? = when (n) {
-        0 -> embedHtml(key, NOCOOKIE, NOCOOKIE, preview)?.let { Attempt(NOCOOKIE, it) }
-        1 -> embedHtml(key, NOCOOKIE, APP_ORIGIN, preview)?.let { Attempt(APP_ORIGIN, it) }
-        2 -> embedHtml(key, YOUTUBE, APP_ORIGIN, preview)?.let { Attempt(APP_ORIGIN, it) }
+    fun attempt(n: Int, key: String?, preview: Boolean = false, clearBg: Boolean = false): Attempt? = when (n) {
+        0 -> embedHtml(key, NOCOOKIE, NOCOOKIE, preview, clearBg)?.let { Attempt(NOCOOKIE, it) }
+        1 -> embedHtml(key, NOCOOKIE, APP_ORIGIN, preview, clearBg)?.let { Attempt(APP_ORIGIN, it) }
+        2 -> embedHtml(key, YOUTUBE, APP_ORIGIN, preview, clearBg)?.let { Attempt(APP_ORIGIN, it) }
         else -> null
     }
 
@@ -45,11 +45,12 @@ object TrailerLogic {
      * Page for the WebView, or null if the id is not valid. Default: the privacy-enhanced embed host (way 0).
      * [preview]: background trailer of the detail page: no player controls, no keyboard, no fullscreen, no annotations.
      */
-    fun embedHtml(key: String?, host: String = NOCOOKIE, origin: String = host, preview: Boolean = false): String? {
+    fun embedHtml(key: String?, host: String = NOCOOKIE, origin: String = host, preview: Boolean = false, clearBg: Boolean = false): String? {
         if (!validKey(key)) return null
         val extra = if (preview) "&controls=0&disablekb=1&fs=0&iv_load_policy=3&modestbranding=1" else ""
+        val bg = if (clearBg) "transparent" else "#000"
         return "<!doctype html><html><head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">" +
-            "<style>html,body{margin:0;height:100%;background:#000}iframe{border:0;width:100%;height:100%}</style></head>" +
+            "<style>html,body{margin:0;height:100%;background:$bg}iframe{border:0;width:100%;height:100%}</style></head>" +
             "<body><iframe id=\"yt\" src=\"$host/embed/$key?autoplay=1&playsinline=1&rel=0$extra" +
             "&enablejsapi=1&origin=$origin\" " +
             "allow=\"autoplay; encrypted-media; picture-in-picture\" allowfullscreen></iframe>" +

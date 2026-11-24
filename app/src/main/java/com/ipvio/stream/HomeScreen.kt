@@ -934,7 +934,7 @@ private fun WideCard(item: Item, sub: String?, progress: Float, modifier: Modifi
             if (img != null) ArtImage(img, item.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0.45f to Color.Transparent, 1f to Color(0xDD000000))))
             AppIcon(AIcon.Play, Color.White, Modifier.align(Alignment.Center), 30.dp)
-            Text(raw = true, text = item.title, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis,
+            Text(raw = true, text = ShowName.of(item.title), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.align(Alignment.BottomStart).padding(start = 12.dp, end = 12.dp, bottom = if (progress > 0f) 14.dp else 10.dp))
             if (progress > 0f) Box(Modifier.align(Alignment.BottomStart).fillMaxWidth().height(5.dp).background(Color(0x66FFFFFF))) {
                 Box(Modifier.fillMaxWidth(progress).fillMaxHeight().background(Accent2))

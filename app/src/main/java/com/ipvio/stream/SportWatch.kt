@@ -130,7 +130,7 @@ internal fun WatchPage(g0: SportData.Game, hub: HubCtx) {
                 FRow({ hub.play(h.ch, hits.map { it.ch }) }) {
                     TeamLogo(h.ch.logo, h.ch.title.take(2), dpx(44))
                     Column(Modifier.weight(1f)) {
-                        Text(raw = true, text = h.ch.title, color = Tok.TextHi, fontSize = spx(18), fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(raw = true, text = ShowName.of(h.ch.title), color = Tok.TextHi, fontSize = spx(18), fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         val why = when (h.why) {
                             0 -> Lang.tr("Von dir zugeordnet")
                             1 -> Lang.tr("Laut TV-Guide") + ": " + h.show

@@ -631,7 +631,7 @@ private fun CatRow(
     ) {
         Row(Modifier.weight(1f, fill = false), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
             if (icon != null) AppIcon(icon, if (icon == AIcon.Star) DS.Gold else Color.White, size = 17.dp)
-            Text(label, color = Color.White, fontSize = 16.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+            Text(ShowName.of(label), color = Color.White, fontSize = 16.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
                 maxLines = 1, overflow = TextOverflow.Ellipsis, raw = raw)
         }
         if (floating) AppIcon(AIcon.Sliders, Accent2, size = 16.dp)
@@ -700,7 +700,7 @@ private fun RowScope.ChannelLineContent(item: Item, epg: List<EpgEntry>, variant
     ChannelLogo(item.logo, item.title, dims.logo)
     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(dims.gap)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(raw = true, text = item.title, color = Tok.TextHi, fontSize = dims.title, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+            Text(raw = true, text = ShowName.of(item.title), color = Tok.TextHi, fontSize = dims.title, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
             val lq = remember(item.id) { LiveQuality.get(item.id) ?: item.quality }
             if (lq != null) Box(Modifier.clip(RoundedCornerShape(DS.RadiusXs)).background(Color(0x26FFFFFF)).padding(horizontal = 6.dp, vertical = 1.dp)) {
                 Text(raw = true, text = lq, color = Accent2, fontSize = dims.badge, fontWeight = FontWeight.Bold, maxLines = 1)
@@ -717,7 +717,7 @@ private fun RowScope.ChannelLineContent(item: Item, epg: List<EpgEntry>, variant
                 Box(Modifier.fillMaxWidth(frac).fillMaxHeight().background(Accent2))
             }
             if (nextE != null) Text(raw = true, text = "${hhmm(nextE.start)}  ${nextE.title}", color = Muted, fontSize = dims.epg, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        } else Text(raw = true, text = item.group, color = Muted, fontSize = dims.epg, maxLines = 1)
+        } else Text(raw = true, text = ShowName.of(item.group), color = Muted, fontSize = dims.epg, maxLines = 1)
     }
     if (Catchup.version >= 0 && Catchup.has(item)) AppIcon(AIcon.Catchup, Accent2, size = dims.icon)
     // DeadLinks.count is read as a change signal (same pattern as Catchup.version): isDead itself is a plain map lookup
@@ -786,7 +786,7 @@ fun ReminderCard(r: Reminder, modifier: Modifier, onClose: () -> Unit, onSwitch:
         Column(Modifier.weight(1f, fill = false), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(raw = true, text = Reminders.whenText(r, nowSec), color = Accent2, fontSize = 14.sp, fontWeight = FontWeight.Bold)
             Text(raw = true, text = r.title, color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(raw = true, text = r.chTitle, color = Muted, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(raw = true, text = ShowName.of(r.chTitle), color = Muted, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         PillButton("Umschalten", Modifier.focusRequester(fr), light = true) { onSwitch() }
         PillButton("Schließen") { onClose() }

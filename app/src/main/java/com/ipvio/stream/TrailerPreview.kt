@@ -19,6 +19,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
@@ -76,6 +80,19 @@ fun TrailerPreview(key: String?, active: Boolean, modifier: Modifier = Modifier)
     }
     val alpha by animateFloatAsState(if (playing) 1f else 0f, tween(700), label = "trailerPreview")
     if (!run || !started || done) return
+    // TEST (black picture on TV devices): the video may be drawn on its own layer under the app window, so the window
+    // has to let it through. Mode 1: translucent window and a transparent page; mode 2: also a transparent hole.
+    val mode = General.trailerMode
+    val window = remember(ctx) { activityOf(ctx)?.window }
+    DisposableEffect(playing, mode) {
+        val w = window
+        if (!playing || mode == 0 || w == null) return@DisposableEffect onDispose { }
+        val old = w.attributes.format
+        w.setFormat(android.graphics.PixelFormat.TRANSLUCENT)
+        Diag.report("Trailer preview: picture mode ${mode + 1} (window format $old -> translucent)")
+        onDispose { w.setFormat(old) }
+    }
+    if (playing && mode == 2) Spacer(modifier.drawBehind { drawRect(Color.Black, blendMode = BlendMode.Clear) })
     androidx.compose.runtime.key(attempt) {
         val n = attempt
         val holder = remember { arrayOfNulls<WebView>(1) }
@@ -85,7 +102,7 @@ fun TrailerPreview(key: String?, active: Boolean, modifier: Modifier = Modifier)
                 holder[0] = null
             }
         }
-        val way = TrailerLogic.attempt(n, key, preview = true)
+        val way = TrailerLogic.attempt(n, key, preview = true, clearBg = mode != 0)
         if (way != null) AndroidView(
             modifier = modifier.alpha(alpha),
             factory = { c ->

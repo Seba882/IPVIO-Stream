@@ -128,6 +128,20 @@ object LangTagLogic {
         return if (code in CODES && code !in WORDLIKE) name.substring(m.range.last + 1) else name
     }
 
+    /**
+     * Removes a leading country / language tag for display ("PL: TVN HD", "|PL| TVN", "[PL] TVN", "PL | TVN", "PL - TVN" → "TVN HD"/"TVN").
+     * Only known codes; with a dash not the codes that are also words ("IT – Welcome to Derry" stays). Never returns an empty name.
+     */
+    fun stripLeadingTag(name: String): String {
+        val m = TAG_START.find(name) ?: return name
+        val code = m.groupValues[1].uppercase()
+        if (code !in CODES) return name
+        val dash = m.groupValues[2].trim().let { it == "-" || it == "–" }
+        if (dash && code in WORDLIKE) return name
+        val rest = name.substring(m.range.last + 1).trimStart(' ', '|', ':', '-', '–', ']', ')')
+        return if (rest.isBlank()) name else rest
+    }
+
     /** Language from an explicit tag in the (uncleaned) movie or series title, otherwise null. */
     fun detectTagged(name: String): String? {
         TAG_START.find(name)?.let { m ->

@@ -38,4 +38,10 @@ Neue Teillisten legst du an, indem du bei „Playlist hinzufügen“ die Teillis
 Alle paar Stunden¦Co kilka godzin
 Trailer automatisch abspielen¦Automatycznie odtwarzaj zwiastuny
 Auf der Detailseite startet der Trailer nach 2 Sekunden hinter dem Titel, solange die Knöpfe oben ausgewählt sind. Braucht einen TMDB-Schlüssel.¦Na stronie szczegółów zwiastun startuje za tytułem po 2 sekundach, dopóki zaznaczone są przyciski na górze. Wymaga klucza TMDB.
+Trailer-Bild (Test)¦Obraz zwiastuna (test)
+Trailer-Bild: wie bisher¦Tryb 1: jak dotąd
+Trailer-Bild: durchsichtiges Fenster¦Tryb 2: przezroczyste okno
+Trailer-Bild: Fenster mit Loch¦Tryb 3: okno z dziurą
+Länderkürzel in Namen ausblenden¦Ukryj prefiks kraju w nazwach
+Zeigt Sender und Kategorien ohne Kürzel am Anfang, z. B. „PL: TVN HD“ als „TVN HD“. Nur die Anzeige ändert sich, Favoriten, Verlauf und Suche bleiben gleich.¦Pokazuje kanały i kategorie bez skrótu na początku, np. „PL: TVN HD” jako „TVN HD”. Zmienia się tylko wyświetlanie, ulubione, historia i wyszukiwanie pozostają bez zmian.
 """

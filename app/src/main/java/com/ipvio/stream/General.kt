@@ -28,6 +28,10 @@ object General {
     var keepAwakeBrowse by mutableStateOf(false)
     /** Detail page: the trailer starts behind the header after 2 s, like Prime Video (default on). */
     var trailerPreview by mutableStateOf(true)
+    /** TEST (black picture on TV devices): 0 as before, 1 transparent page + translucent window, 2 like 1 + transparent hole behind the trailer. */
+    var trailerMode by mutableStateOf(0)
+    /** Channel and category names without a leading country tag ("PL: TVN" → "TVN"), display only (default off). */
+    var hidePrefix by mutableStateOf(false)
     /** W-002: "Movies" / "Series" in the sidebar open the categories screen right away instead of their home page. */
     var vodCats by mutableStateOf(false)
     /** Live TV: show the quality variants of one channel (8K/4K/FHD/HD/SD) as a single row. */
@@ -130,6 +134,8 @@ object General {
         confirmExit = p.getBoolean("confirm_exit", true)
         keepAwakeBrowse = p.getBoolean("keep_awake_browse", false)
         trailerPreview = p.getBoolean("trailer_preview", true)
+        trailerMode = p.getInt("trailer_mode_test", 0).coerceIn(0, 2)
+        hidePrefix = p.getBoolean("hide_prefix", false)
         vodCats = p.getBoolean("vod_cats", false)
         bundleLive = p.getBoolean("bundle_live", true)
         channelRowSize = p.getInt("channel_row_size", 1).coerceIn(0, 2)
@@ -182,6 +188,8 @@ object General {
     fun setConfirmExit(c: Context, v: Boolean) { confirmExit = v; prefs(c).edit().putBoolean("confirm_exit", v).apply() }
     fun setKeepAwakeBrowse(c: Context, v: Boolean) { keepAwakeBrowse = v; prefs(c).edit().putBoolean("keep_awake_browse", v).apply() }
     fun setTrailerPreview(c: Context, v: Boolean) { trailerPreview = v; prefs(c).edit().putBoolean("trailer_preview", v).apply() }
+    fun setHidePrefix(c: Context, v: Boolean) { hidePrefix = v; prefs(c).edit().putBoolean("hide_prefix", v).apply() }
+    fun setTrailerMode(c: Context, v: Int) { trailerMode = v.coerceIn(0, 2); prefs(c).edit().putInt("trailer_mode_test", trailerMode).apply() }
     fun setPlan(c: Context, mode: Int = refreshMode, interval: Int = refreshInterval, hour: Int = refreshHour, minute: Int = refreshMinute, dow: Int = refreshDow) {
         refreshMode = mode.coerceIn(0, 4); refreshInterval = interval.coerceIn(1, 168)
         refreshHour = hour.coerceIn(0, 23); refreshMinute = minute.coerceIn(0, 59); refreshDow = dow.coerceIn(1, 7)

@@ -418,7 +418,7 @@ private fun CatListRow(
             .padding(horizontal = 12.dp, vertical = 10.dp),
         horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(name, color = if (isTopEntry(name)) Accent2 else Color.White, fontSize = 14.sp, fontWeight = if (selected || isTopEntry(name)) FontWeight.Bold else FontWeight.Normal,
+        Text(ShowName.of(name), color = if (isTopEntry(name)) Accent2 else Color.White, fontSize = 14.sp, fontWeight = if (selected || isTopEntry(name)) FontWeight.Bold else FontWeight.Normal,
             maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
         if (floating) AppIcon(AIcon.Sliders, Accent2, size = 16.dp) else Text("$count", color = Muted, fontSize = 13.sp)
     }
@@ -466,7 +466,7 @@ private fun CatTile(name: String, items: List<Item>, modifier: Modifier, onClick
             Modifier.fillMaxHeight().fillMaxWidth(0.62f).padding(start = 20.dp, top = 16.dp, bottom = 16.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(name, color = if (isTopEntry(name)) Accent2 else Color.White, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(ShowName.of(name), color = if (isTopEntry(name)) Accent2 else Color.White, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
             Text("${items.size} Titel", color = Muted, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
         }
         if (posters.isNotEmpty()) {

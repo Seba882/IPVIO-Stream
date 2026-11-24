@@ -435,7 +435,7 @@ private fun GuideCatRow(c: GuideCat, selected: Boolean, modifier: Modifier, onFo
     ) {
         if (c.icon != null) AppIcon(c.icon, if (c.icon == AIcon.Star) DS.Gold else if (selected) Accent1 else Muted, size = 15.dp)
         // Provider names stay as they are; the app's own labels are translated
-        Text(c.name, color = Color.White, fontSize = 14.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+        Text(ShowName.of(c.name), color = Color.White, fontSize = 14.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
             maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f), raw = c.icon == null || c.icon == AIcon.Lists)
         Text(raw = true, text = c.items.size.toString(), color = Muted, fontSize = 13.sp)
     }
@@ -489,7 +489,7 @@ private fun GuideDetailPanel(e: EpgEntry?, ch: Item?, nowSec: Long, modifier: Mo
                     status, color = if (isNow) OnAccent else Tok.TextMid, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold,
                     modifier = Modifier.clip(RoundedCornerShape(DS.RadiusXs)).background(if (isNow) Accent1 else Color(0x2EFFFFFF)).padding(horizontal = 8.dp, vertical = 3.dp)
                 )
-                Text(raw = true, text = ch.title, color = PT.T2, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                Text(raw = true, text = ShowName.of(ch.title), color = PT.T2, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
                 Text(raw = true, text = "·  ${hhmm(e.start)} – ${hhmm(e.end)}", color = PT.T2, fontSize = 13.sp, style = TNUM, maxLines = 1)
                 Text("·  ${(e.end - e.start) / 60} Min", color = PT.T2, fontSize = 13.sp, maxLines = 1)
                 if (Reminders.isSet(ch.id, e.start)) AppIcon(AIcon.Bell, Accent2, size = 14.dp)
@@ -579,7 +579,7 @@ private fun GuideRow(
                 if (ch.logo != null) AsyncImage(ch.logo, null, Modifier.fillMaxSize().padding(3.dp), contentScale = ContentScale.Fit)
             }
             Text(
-                ch.title, color = Color.White, fontSize = 14.sp,
+                ShowName.of(ch.title), color = Color.White, fontSize = 14.sp,
                 fontWeight = if (current || f) FontWeight.ExtraBold else FontWeight.Medium, maxLines = 2, overflow = TextOverflow.Ellipsis
             )
         }

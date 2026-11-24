@@ -473,7 +473,7 @@ fun ChannelNowCard(item: Item, modifier: Modifier, onClick: () -> Unit) {
                 if (Library.isFav(item.id)) AppIcon(AIcon.Star, DS.Gold, Modifier.align(Alignment.TopEnd), dpx(14))
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(dpx(2))) {
-                Text(raw = true, text = item.title, color = Color.White, fontSize = spx(15), fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(raw = true, text = ShowName.of(item.title), color = Color.White, fontSize = spx(15), fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 if (nowE != null) {
                     Text(raw = true, text = nowE.title, color = Color(0xFFD0D0D6), fontSize = spx(13), maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text(raw = true, text = hhmm(nowE.start) + " – " + hhmm(nowE.end), color = Color(0xFFA0A0A8), fontSize = spx(13), maxLines = 1)
@@ -559,7 +559,7 @@ fun LandscapeCard(item: Item, modifier: Modifier, reorder: List<Item>? = null, o
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0.35f to Color.Transparent, 1f to Color(0xF5070709))))
         if (item.kind != Kind.SERIES && DeadLinks.isDead(item.url)) AppIcon(AIcon.Warning, DS.Gold, Modifier.align(Alignment.TopStart).padding(dpx(8)), dpx(18))
         Column(Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(start = dpx(12), end = dpx(12), bottom = dpx(10))) {
-            Text(raw = true, text = item.title, color = Color.White, fontSize = spx(16), fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(raw = true, text = ShowName.of(item.title), color = Color.White, fontSize = spx(16), fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             m?.genres?.firstOrNull()?.let { Text(raw = true, text = it, color = SoftInk, fontSize = spx(13), maxLines = 1) }
             Row(Modifier.padding(top = dpx(4)), verticalAlignment = Alignment.CenterVertically) {
                 Text(
@@ -780,7 +780,7 @@ private fun PosterInfo(item: Item, base: Meta, load: Boolean, baseW: Dp, modifie
     val k = (baseW.value / 150f).coerceIn(0.85f, 1.6f)
     val soft = Tok.TextMid
     Column(modifier, verticalArrangement = Arrangement.spacedBy((4f * k).dp)) {
-        Text(raw = true, text = item.title, color = Color.White, fontSize = (16f * k).sp, lineHeight = (19f * k).sp, fontWeight = FontWeight.ExtraBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        Text(raw = true, text = ShowName.of(item.title), color = Color.White, fontSize = (16f * k).sp, lineHeight = (19f * k).sp, fontWeight = FontWeight.ExtraBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy((8f * k).dp)) {
             ScoreRow(m, (11f * k).toInt().coerceAtLeast(10))
             (m.year ?: item.year?.toString())?.let { Text(raw = true, text = it, color = soft, fontSize = (12f * k).sp, maxLines = 1) }
@@ -795,7 +795,7 @@ private fun PreviewInfo(item: Item, base: Meta, load: Boolean, modifier: Modifie
     val m = rememberFullMeta(item, base, load) ?: base
     val soft = Tok.TextMid
     Column(modifier, verticalArrangement = Arrangement.spacedBy(dpx(8))) {
-        Text(raw = true, text = item.title, color = Color.White, fontSize = spx(28), fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(raw = true, text = ShowName.of(item.title), color = Color.White, fontSize = spx(28), fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(dpx(14))) {
             ScoreRow(m, 18)
             (m.year ?: item.year?.toString())?.let { Text(raw = true, text = it, color = soft, fontSize = spx(19), fontWeight = FontWeight.Medium) }
@@ -904,7 +904,7 @@ fun ChannelDetailCard(item: Item, modifier: Modifier, reorder: List<Item>? = nul
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(dpx(4))) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(dpx(8))) {
-                    Text(raw = true, text = item.title, color = Tok.TextLow, fontSize = spx(15), maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                    Text(raw = true, text = ShowName.of(item.title), color = Tok.TextLow, fontSize = spx(15), maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
                     if (nowE != null) Text("JETZT", color = OnAccent, fontSize = spx(11), fontWeight = FontWeight.ExtraBold,
                         modifier = Modifier.clip(RoundedCornerShape(dpx(4))).background(Accent1).padding(horizontal = dpx(6), vertical = dpx(1)))
                 }

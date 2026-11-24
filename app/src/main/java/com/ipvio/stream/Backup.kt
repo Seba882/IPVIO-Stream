@@ -117,7 +117,12 @@ object Backup {
             files.put(n, prefsToJson(all))
         }
         root.put("files", files)
-        if (withPlaylists) root.put("playlists", PlaylistStore.exportLists(c))
+        if (withPlaylists) {
+            root.put("playlists", PlaylistStore.exportLists(c))
+            // Own API keys (TMDB, OMDb, subtitles) go with the playlists: same private file, same rule (only between own devices)
+            val keys = c.applicationContext.getSharedPreferences(KEYS, Context.MODE_PRIVATE).all
+            if (keys.isNotEmpty()) root.put("keys", prefsToJson(keys))
+        }
         root.toString()
     }.getOrNull()
 
@@ -266,6 +271,7 @@ object Backup {
         }
         if (withPlaylists) {
             root.optJSONArray("playlists")?.let { PlaylistStore.importLists(c, it) }
+            root.optJSONObject("keys")?.let { fillMissingKeys(c, it) }
             secure?.optJSONArray("playlists")?.let { PlaylistStore.importLists(c, it) }
             secure?.optJSONObject("keys")?.let { fillMissingKeys(c, it) }
         }
