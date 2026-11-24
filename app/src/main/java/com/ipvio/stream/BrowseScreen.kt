@@ -50,6 +50,8 @@ class BrowseState(req0: BrowseReq) {
     var minRi by mutableIntStateOf(0)
     var year by mutableStateOf("Alle")
     var genre by mutableStateOf<String?>(null)
+    /** Genres to leave out ("all but animation"); several at once. */
+    var notGenres by mutableStateOf<Set<String>>(emptySet())
     var country by mutableStateOf<String?>(null)
     /** Language filter (code from [LangTagLogic], "?" = untagged), null = all. Saved per type in [BrowseLangPrefs]. */
     var lang by mutableStateOf<String?>(null)
@@ -68,7 +70,7 @@ class BrowseState(req0: BrowseReq) {
 }
 
 internal data class BrowseKey(val sort: Int, val minRi: Int, val year: String, val genre: String?, val country: String?, val ver: Int, val source: Int = -1, val lang: String? = null,
-    val tracks: Boolean = false, val scanVer: Int = 0)
+    val tracks: Boolean = false, val scanVer: Int = 0, val notGenres: Set<String> = emptySet())
 
 /** Choices for the filters (genres, countries, years) – from the titles of the list. */
 internal class Facets(val genres: List<String>, val countries: List<Pair<String, String>>, val years: List<String>)
@@ -154,6 +156,8 @@ private fun filterAndSort(items: List<Item>, k: BrowseKey, keep: ((Item) -> Bool
         r >= minR &&
             (k.year == "Alle" || yearMatches(k.year, yearOf(i))) &&
             (k.genre == null || (m != null && Genres.categoriesOf(m).contains(k.genre))) &&
+            // Left out genres: titles without known genres stay (nothing to say they are animation)
+            (k.notGenres.isEmpty() || m == null || Genres.categoriesOf(m).none { it in k.notGenres }) &&
             (k.country == null || (m != null && m.countries.contains(k.country))) &&
             (k.lang == null || i.lang == k.lang)
     }
@@ -213,7 +217,7 @@ var restoreIdx by remember { mutableIntStateOf(state.focused) }
     // Track languages (movies only): the app language as audio or subtitles, from the language check
     val uiLang = Lang.code()
     val key = BrowseKey(state.sort, state.minRi, state.year, state.genre, state.country, ver, state.source, state.lang,
-        state.tracks, if (state.tracks) LangScan.version else 0)
+        state.tracks, if (state.tracks) LangScan.version else 0, state.notGenres)
     val listOrNull by produceState(state.lastList?.takeIf { state.lastKey == key }, req, key) {
         val keep: ((Item) -> Boolean)? = if (key.tracks) { i -> LangScan.result(ctx, i)?.has(uiLang) == true } else null
         value = withContext(Dispatchers.Default) { filterAndSort(req.items, key, keep) }.also { state.lastKey = key; state.lastList = it }
@@ -302,6 +306,15 @@ var restoreIdx by remember { mutableIntStateOf(state.focused) }
                             state.genre = if (it == 0) null else go[it]
                         }
                     }
+                    // "Without": every pick toggles one genre; several can be left out at once
+                    if (genres.isNotEmpty()) item {
+                        val nx = state.notGenres
+                        val opts = listOf(Lang.tr("Nichts ausblenden")) + genres.map { g -> (if (g in nx) "✓ " else "") + Lang.tr(g) }
+                        val value = when (nx.size) { 0 -> Lang.tr("Nichts ausblenden"); 1 -> Lang.tr(nx.first()); else -> Lang.tr(nx.first()) + " +" + (nx.size - 1) }
+                        DropdownPill("Ohne", value, opts, 0, active = nx.isNotEmpty(), icon = FIcon.Genre) {
+                            state.notGenres = if (it == 0) emptySet() else genres[it - 1].let { g -> if (g in nx) nx - g else nx + g }
+                        }
+                    }
                     if (countries.isNotEmpty()) item {
                         val co = listOf("Alle") + countries.map { it.second }
                         val idx = countries.indexOfFirst { it.first == state.country } + 1
@@ -349,7 +362,7 @@ var restoreIdx by remember { mutableIntStateOf(state.focused) }
                     }
                     item {
                         FilterPill("Zurücksetzen", false, icon = FIcon.Reset) {
-                            state.minRi = 0; state.year = "Alle"; state.genre = null; state.country = null; state.lang = null; BrowseLangPrefs.set(ctx, browseKind, null); state.source = -1; state.tracks = false; state.sort = defaultSort(req.sort)
+                            state.minRi = 0; state.year = "Alle"; state.genre = null; state.country = null; state.lang = null; BrowseLangPrefs.set(ctx, browseKind, null); state.source = -1; state.tracks = false; state.notGenres = emptySet(); state.sort = defaultSort(req.sort)
                         }
                     }
                     // View and grid: rarely needed, hence at the very end
@@ -376,7 +389,7 @@ var restoreIdx by remember { mutableIntStateOf(state.focused) }
                 if (ready && list.isEmpty()) Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     EmptyState(AIcon.Sliders, "Keine Treffer", "Mit diesen Filtern gibt es hier keine Titel.", action = "Filter zurücksetzen") {
                         runCatching { filterFocus.requestFocus() }
-                        state.minRi = 0; state.year = "Alle"; state.genre = null; state.country = null; state.lang = null; BrowseLangPrefs.set(ctx, browseKind, null); state.source = -1; state.tracks = false; state.sort = defaultSort(req.sort)
+                        state.minRi = 0; state.year = "Alle"; state.genre = null; state.country = null; state.lang = null; BrowseLangPrefs.set(ctx, browseKind, null); state.source = -1; state.tracks = false; state.notGenres = emptySet(); state.sort = defaultSort(req.sort)
                     }
                 }
                 if (!ready) {

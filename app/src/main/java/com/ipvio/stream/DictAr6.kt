@@ -45,4 +45,6 @@ Mit Komma trennen. Ein Text wird am Anfang oder am Ende eines Namens entfernt (G
 Aus der Sammlung „{0}“¦من مجموعة «{0}»
 Titel als Logo¦العنوان كشعار
 Auf der Detailseite erscheint der Titel als Logo des Films (von TMDB), wenn es eines gibt. Braucht einen TMDB-Schlüssel.¦في صفحة التفاصيل يظهر العنوان كشعار الفيلم (من TMDB) إن وُجد. يتطلب مفتاح TMDB.
+Ohne¦بدون
+Nichts ausblenden¦لا تخفِ شيئًا
 """

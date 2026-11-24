@@ -262,4 +262,6 @@ Mit Komma trennen. Ein Text wird am Anfang oder am Ende eines Namens entfernt (G
 Aus der Sammlung „{0}“¦Z kolekcji „{0}”
 Titel als Logo¦Tytuł jako logo
 Auf der Detailseite erscheint der Titel als Logo des Films (von TMDB), wenn es eines gibt. Braucht einen TMDB-Schlüssel.¦Na stronie szczegółów tytuł wyświetla się jako logo filmu (z TMDB), jeśli jest dostępne. Wymaga klucza TMDB.
+Ohne¦Bez
+Nichts ausblenden¦Nic nie ukrywaj
 """
