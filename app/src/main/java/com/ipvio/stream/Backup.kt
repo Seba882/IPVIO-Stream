@@ -45,8 +45,13 @@ object Backup {
     /** Device id and name for the sync; never part of a backup. */
     private const val SYNC_PREFS = "ipvio_sync"
 
-    /** A real backup never gets bigger; larger files are not even read. */
-    private const val MAX_BYTES = 4L * 1024 * 1024
+    /**
+     * A real backup never gets bigger; larger files are not even read. 24 MB: room for several playlists loaded from a
+     * file (packed), still safe to read on a Fire TV stick. Without such playlists a backup stays far below 1 MB.
+     */
+    const val MAX_BYTES = 24L * 1024 * 1024
+    /** Room for playlist files inside a backup with playlists (characters), below MAX_BYTES with margin for the rest. */
+    private const val FILE_BUDGET = 22_000_000
 
     /** Restore results below zero. */
     const val ERR_INVALID = -1
@@ -118,7 +123,10 @@ object Backup {
         }
         root.put("files", files)
         if (withPlaylists) {
-            root.put("playlists", PlaylistStore.exportLists(c))
+            // Playlists loaded from a file travel with their content while the whole backup stays readable (MAX_BYTES)
+            // Budget = what is left below MAX_BYTES after the settings, with room for keys and the list entries
+            val budget = minOf(FILE_BUDGET.toLong(), MAX_BYTES - root.toString().length - 200_000).toInt()
+            root.put("playlists", PlaylistStore.exportLists(c, budget.coerceAtLeast(1)))
             // Own API keys (TMDB, OMDb, subtitles) go with the playlists: same private file, same rule (only between own devices)
             val keys = c.applicationContext.getSharedPreferences(KEYS, Context.MODE_PRIVATE).all
             if (keys.isNotEmpty()) root.put("keys", prefsToJson(keys))

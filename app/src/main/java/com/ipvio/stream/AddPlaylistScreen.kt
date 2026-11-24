@@ -118,7 +118,7 @@ fun AddPlaylistScreen(onDone: () -> Unit) {
             val n = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                 runCatching {
                     val bytes = ctx.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return@runCatching -1
-                    if (bytes.size > 4 * 1024 * 1024) -1 else Backup.restoreText(ctx, String(bytes, Charsets.UTF_8))
+                    if (bytes.size > Backup.MAX_BYTES) -1 else Backup.restoreText(ctx, String(bytes, Charsets.UTF_8))
                 }.getOrDefault(-1)
             }
             if (n >= 0) Profiles.restart(ctx) else PlaylistStore.error = "Keine gültige Sicherung gefunden."

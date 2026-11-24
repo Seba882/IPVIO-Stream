@@ -26,4 +26,10 @@ Länderkürzel in Namen ausblenden¦إخفاء رمز البلد في الأسم
 Zeigt Sender und Kategorien ohne Kürzel am Anfang, z. B. „PL: TVN HD“ als „TVN HD“. Nur die Anzeige ändert sich, Favoriten, Verlauf und Suche bleiben gleich.¦يعرض القنوات والفئات بدون الرمز في البداية، مثل «PL: TVN HD» كـ«TVN HD». يتغير العرض فقط، وتبقى المفضلة والسجل والبحث كما هي.
 Musiksender¦موسيقى
 Weitere Sender¦قنوات أخرى
+Trailer auf der Startseite¦الإعلان الترويجي في الصفحة الرئيسية
+Auf der Startseite startet der Trailer des ausgewählten Titels nach 2 Sekunden hinter dem großen Bild. Braucht einen TMDB-Schlüssel.¦في الصفحة الرئيسية يبدأ الإعلان الترويجي للعنوان المحدد خلف الصورة الكبيرة بعد ثانيتين. يتطلب مفتاح TMDB.
+Wird gesendet¦جارٍ الإرسال
+Wird auf dem Fernseher verarbeitet …¦جارٍ المعالجة على التلفاز …
+Bitte zuerst eine Datei wählen.¦يرجى اختيار ملف أولًا.
+Verbindung unterbrochen¦انقطع الاتصال
 """
