@@ -51,8 +51,10 @@ data class CatReq(
 
 const val CAT_RECENT = "Zuletzt geschaut"
 const val CAT_WATCH = "Meine Liste"
+/** Seasonal entry (15 Nov – 6 Jan): all Christmas titles of this area, see [SeasonLogic]. */
+const val CAT_XMAS = "Weihnachten"
 
-fun isTopEntry(name: String) = name == CAT_RECENT || name == CAT_WATCH
+fun isTopEntry(name: String) = name == CAT_RECENT || name == CAT_WATCH || name == CAT_XMAS
 
 /** Row text of a folder built from shared category patterns (#96): "FR  ›". */
 fun folderLabel(prefix: String) = "$prefix  ›"
@@ -126,13 +128,16 @@ fun CategoriesScreen(
         val f = folderByLabel[name]
         if (mode == 1 && f != null) { folder = f.prefix } else { onPick(name, items, s) }
     }
-    val entries = remember(map, az, saved, CatOrder.version, req.recent, req.watch) {
+    // Christmas titles of the whole area (provider categories hold every title once or more)
+    val xmas = remember(req.provider) { if (SeasonLogic.isXmasSeason()) SeasonLogic.xmas(req.provider.values.asSequence().flatten().asIterable()) else emptyList() }
+    val entries = remember(map, az, saved, CatOrder.version, req.recent, req.watch, xmas) {
         val l = map.entries.map { it.key to it.value }
         val base = if (saved && area != null) CatOrder.sorted(area, map.keys.toList()).mapNotNull { k -> map[k]?.let { k to it } }
             else if (az) l.sortedBy { it.first.lowercase() } else l
         val top = ArrayList<Pair<String, List<Item>>>()
         if (req.recent.isNotEmpty()) top.add(CAT_RECENT to req.recent)
         if (req.watch.isNotEmpty()) top.add(CAT_WATCH to req.watch)
+        if (xmas.isNotEmpty()) top.add(CAT_XMAS to xmas)
         top + base
     }
     val restoring = remember { CatMemory.restore[req.title] == true }
@@ -179,7 +184,11 @@ fun CategoriesScreen(
                 }
             }
             Spacer(Modifier.height(12.dp))
-            if (mode == 0 && req.ipvio.isEmpty()) AutoGenresOff()
+            if (mode == 0 && req.ipvio.isEmpty()) {
+                AutoGenresOff()
+                // The Christmas collection needs no automatic genres: offer it here too
+                if (xmas.isNotEmpty()) PillButton(Lang.tr(CAT_XMAS) + " (" + xmas.size + ")", modifier = Modifier.padding(top = 12.dp), raw = true) { onPick(CAT_XMAS, xmas, req.sort) }
+            }
             else {
                 if (mode == 0 && Classifier.running) Text("Genres werden gerade im Hintergrund erkannt. Die Kategorien erscheinen nach und nach.", color = Muted, fontSize = 14.sp, modifier = Modifier.padding(bottom = 8.dp))
                 // Auto genres: titles sorted by rating (best first); provider categories keep their sorting
@@ -489,7 +498,9 @@ private fun CatTile(name: String, items: List<Item>, modifier: Modifier, onClick
 private fun AutoGenresOff() {
     val all = PlaylistStore.channels
     val n = remember(all) { all.count { it.kind != Kind.LIVE } }
-    val nf = java.text.NumberFormat.getIntegerInstance()
+    // Plain digits: the translated text is found by a pattern that reads digits, dots and commas only (not the space
+    // some locales use as thousands separator), otherwise the German text stays
+    val nf = java.text.NumberFormat.getIntegerInstance(java.util.Locale.GERMANY)
     val shape = RoundedCornerShape(DS.RadiusL)
     Column(
         Modifier.widthIn(max = 720.dp).clip(shape).background(Surf).padding(24.dp),

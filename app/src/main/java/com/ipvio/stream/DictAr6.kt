@@ -32,4 +32,11 @@ Wird gesendet¦جارٍ الإرسال
 Wird auf dem Fernseher verarbeitet …¦جارٍ المعالجة على التلفاز …
 Bitte zuerst eine Datei wählen.¦يرجى اختيار ملف أولًا.
 Verbindung unterbrochen¦انقطع الاتصال
+Weihnachten¦عيد الميلاد
+Unterhaltung¦ترفيه
+Lifestyle¦أسلوب الحياة
+Tonspuren¦المسارات الصوتية
+Ton oder Untertitel¦صوت أو ترجمة
+Sprachen prüfen¦فحص اللغات
+Sprachen werden geprüft¦جارٍ فحص اللغات
 """

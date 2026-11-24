@@ -9,13 +9,17 @@ object LiveGenre {
 
     private fun rx(p: String) = Regex(p, RegexOption.IGNORE_CASE)
 
+    // Polish (and other) words added for providers that name their groups in the local language ("FILMY I SERIALE",
+    // "DOKUMENTALNE", "DLA DZIECI", "INFORMACYJNE", "MUZYCZNE"); two new genres: entertainment and lifestyle.
     val ALL = listOf(
         Genre("GEN:sport", "Sport", null),   // sport is detected by SportLogic
-        Genre("GEN:movies", "Filme", rx("""\b(films?|movies?|cinema\w*|kino|cine\w*|sinema\w*|filmovi|premiere|cinemax|hbo|serien|series|serije|dizi)\b""")),
-        Genre("GEN:doku", "Dokumentationen", rx("""documentar\w*|\bdoku\w*|discovery|nat\s?geo|national\s?geographic|\bhistory\b|animal\s?planet|\bdmax\b|nautilus|explore|\bscience\b|dokumentar\w*""")),
-        Genre("GEN:kids", "Kinder", rx("""\bkids?\b|kinder|children|cartoon\w*|\bnick\w*|disney|junior|\bbaby\w*|toon\w*|boomerang|ragazzi|çocuk|djeca|dječji|\bkika\b|jetix|\bpogo\b""")),
-        Genre("GEN:news", "Nachrichten", rx("""\bnews\b|nachrichten|\bn-?tv\b|\bcnn\b|euronews|al\s?jazeera|tagesschau|\bwelt\b|haber|vijesti|noticias|\bnotizie\b|\binfo(rmation)?\b|\brtl\s?aktuell\b""")),
-        Genre("GEN:music", "Musiksender", rx("""\bmusic\w*|musik|\bmtv\b|\bvh1\b|\bviva\b|\bklubbing\b|\bradio\b|\bmuzik\w*"""))
+        Genre("GEN:movies", "Filme", rx("""\b(films?|filmy|filmow\w*|movies?|cinema\w*|kino|cine\w*|sinema\w*|filmovi|premiere|cinemax|hbo|serien|series|seriale?|serije|dizi|filmbox|epic\s?drama|axn|amc)\b""")),
+        Genre("GEN:doku", "Dokumentationen", rx("""documentar\w*|\bdoku\w*|dokument\w*|discovery|nat\s?geo|national\s?geographic|\bhistory\b|animal\s?planet|\bdmax\b|nautilus|explore|\bscience\b|dokumentar\w*|\bviasat\s?(history|nature|explore)""")),
+        Genre("GEN:kids", "Kinder", rx("""\bkids?\b|kinder|children|cartoon\w*|\bnick\w*|disney|junior|\bbaby\w*|toon\w*|boomerang|ragazzi|çocuk|djeca|dječji|\bkika\b|jetix|\bpogo\b|dzieci|dziecię\w*|bajk\w*|mini\s?mini|teletoon|cbeebies|duck\s?tv|\bpolsat\s?jim\s?jam""")),
+        Genre("GEN:news", "Nachrichten", rx("""\bnews\b|nachrichten|\bn-?tv\b|\bcnn\b|euronews|al\s?jazeera|tagesschau|\bwelt\b|haber|vijesti|noticias|\bnotizie\b|\binfo(rmation)?\b|\brtl\s?aktuell\b|informac\w*|wiadomo\w*|\btvn\s?24|\btvp\s?info|wpolsce|\btv\s?republika|\bbiznes\b""")),
+        Genre("GEN:music", "Musiksender", rx("""\bmusic\w*|musik|\bmtv\b|\bvh1\b|\bviva\b|\bklubbing\b|\bradio\b|\bmuzik\w*|muzy\w*|\bpolo\s?tv|\beska\s?tv|\b4fun|\bvox\s?music|\bstars\s?tv""")),
+        Genre("GEN:fun", "Unterhaltung", rx("""entertain\w*|unterhaltung|rozrywk\w*|ogólno\w*|general\b|eğlence|zabav\w*|\bcomedy|komedi\w*|\bshow\b""")),
+        Genre("GEN:life", "Lifestyle", rx("""lifestyle|\btlc\b|\bhgtv\b|food\s?network|\btravel|kuchni\w*|cuisine|fashion|\bstyle\b|zdrowi\w*|\bhome\b|dom\s?i\s?ogr\w*|\bwomen\b|\bkobiet\w*|\bid\s?(investigation|xtra)"""))
     )
 
     /** Channels in none of the genres. Only shown when "Automatic genres" hides the provider's groups. */

@@ -36,4 +36,11 @@ Wird gesendet¦Sending¦Gönderiliyor¦Šalje se¦¦¦Enviando¦Envoi¦Invio¦Ve
 Wird auf dem Fernseher verarbeitet …¦Processing on the TV …¦TV’de işleniyor …¦Obrađuje se na TV-u …¦¦¦Procesando en el televisor …¦Traitement sur le téléviseur …¦Elaborazione sul televisore …¦Wordt verwerkt op de tv …
 Bitte zuerst eine Datei wählen.¦Please choose a file first.¦Lütfen önce bir dosya seçin.¦Prvo odaberi datoteku.¦¦¦Elige primero un archivo.¦Choisis d’abord un fichier.¦Scegli prima un file.¦Kies eerst een bestand.
 Verbindung unterbrochen¦Connection lost¦Bağlantı kesildi¦Veza prekinuta¦¦¦Conexión interrumpida¦Connexion interrompue¦Connessione interrotta¦Verbinding verbroken
+Weihnachten¦Christmas¦Yılbaşı¦Božić¦¦¦Navidad¦Noël¦Natale¦Kerstmis
+Unterhaltung¦Entertainment¦Eğlence¦Zabava¦¦¦Entretenimiento¦Divertissement¦Intrattenimento¦Amusement
+Lifestyle¦Lifestyle¦Yaşam tarzı¦Lifestyle¦¦¦Estilo de vida¦Art de vivre¦Lifestyle¦Lifestyle
+Tonspuren¦Audio tracks¦Ses parçaları¦Audio zapisi¦¦¦Pistas de audio¦Pistes audio¦Tracce audio¦Audiosporen
+Ton oder Untertitel¦audio or subtitles¦ses veya altyazı¦zvuk ili titlovi¦¦¦audio o subtítulos¦audio ou sous-titres¦audio o sottotitoli¦audio of ondertiteling
+Sprachen prüfen¦Check languages¦Dilleri kontrol et¦Provjeri jezike¦¦¦Comprobar idiomas¦Vérifier les langues¦Controlla le lingue¦Talen controleren
+Sprachen werden geprüft¦Checking languages¦Diller kontrol ediliyor¦Provjeravaju se jezici¦¦¦Comprobando idiomas¦Vérification des langues¦Controllo delle lingue¦Talen worden gecontroleerd
 """

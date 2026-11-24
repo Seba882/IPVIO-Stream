@@ -28,7 +28,8 @@ object LiveBundleLogic {
 
     private fun baseNameNow(title: String): String {
         // "DE - Das Erste" only for known language codes (a plain 3-letter prefix like "ZDF - neo" is part of the name)
-        var t = LangTagLogic.stripDashTag(title)
+        // "PL VIP: Cinemax RAW", "PL | Cinemax": country code with provider words first (same rule as the display option)
+        var t = LangTagLogic.stripDashTag(LangTagLogic.stripLeadingTag(title))
         PREFIX.find(t)?.let { m -> if (m.range.last + 1 < t.length) t = t.substring(m.range.last + 1) }
         t = QUALITY.replace(t, " ")
         return t.lowercase().replace(SEPARATORS, " ").trim()
@@ -72,16 +73,27 @@ object LiveBundleLogic {
     }
 
     private fun bundleNow(items: List<Item>): Result {
-        val groups = LinkedHashMap<String, ArrayList<Item>>()
+        val byBase = LinkedHashMap<String, ArrayList<Item>>()
         for (i in items) {
             val base = baseName(i.title)
             // Names that normalize to nothing stay alone
-            val key = if (base.isEmpty()) "id:" + i.id else base + "|" + i.lang
-            groups.getOrPut(key) { ArrayList() }.add(i)
+            val key = if (base.isEmpty()) "id:" + i.id else base
+            byBase.getOrPut(key) { ArrayList() }.add(i)
+        }
+        // Same name, different language tag: separate channels ("Sport1" DE / TR). A channel without a language tag
+        // ("TVN UHD" in a group without a country) joins the tagged ones when there is only one tagged language.
+        val groups = ArrayList<List<Item>>(byBase.size)
+        for ((k, l) in byBase) {
+            if (k.startsWith("id:") || l.size == 1) { groups.add(l); continue }
+            val byLang = LinkedHashMap<String, ArrayList<Item>>()
+            for (i in l) byLang.getOrPut(i.lang) { ArrayList() }.add(i)
+            val known = byLang.keys.count { it != LangTagLogic.UNKNOWN }
+            if (byLang.size == 1 || (known == 1 && byLang.containsKey(LangTagLogic.UNKNOWN))) groups.add(l)
+            else groups.addAll(byLang.values)
         }
         val out = ArrayList<Item>(groups.size)
         val variants = HashMap<String, List<Item>>()
-        for (g in groups.values) {
+        for (g in groups) {
             if (g.size == 1) { out.add(g[0]); continue }
             val sorted = g.sortedByDescending { rank(it.title, it.quality) }
             out.add(sorted[0])

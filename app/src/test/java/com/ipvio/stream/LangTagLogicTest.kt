@@ -66,4 +66,13 @@ class LangTagLogicTest {
         assertEquals("IT – Welcome to Derry", LangTagLogic.stripLeadingTag("IT – Welcome to Derry"))
         assertEquals("PL:", LangTagLogic.stripLeadingTag("PL:"))
     }
+
+    @Test
+    fun stripLeadingTag_withProviderWords() {
+        assertEquals("CINEMAX 2 RAW", LangTagLogic.stripLeadingTag("PL VIP: CINEMAX 2 RAW"))
+        assertEquals("TVN", LangTagLogic.stripLeadingTag("PL RAW | TVN"))
+        assertEquals("TVN 7", LangTagLogic.stripLeadingTag("|PL HD| TVN 7"))
+        assertEquals("VIP: TVN", LangTagLogic.stripLeadingTag("VIP: TVN"))
+        assertEquals("PL VIP:", LangTagLogic.stripLeadingTag("PL VIP:"))
+    }
 }

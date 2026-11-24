@@ -636,6 +636,36 @@ object PlaylistStore {
         if (i in lists.indices && name.isNotBlank()) { lists[i] = PL(name.trim(), lists[i].url); persist(c) }
     }
 
+    /**
+     * New address for a playlist (another server, new login). Settings kept with the address (content mode, refresh plan,
+     * backup servers, "shown additionally") move to the new one; the stored copy of the old address is deleted, so the
+     * next load fetches the playlist from the new address. Returns false for an invalid address, a playlist file or an
+     * address another playlist already has. The caller reloads the playlist if it is the main one.
+     */
+    fun changeUrl(c: Context, i: Int, raw: String): Boolean {
+        ensure(c)
+        if (i !in lists.indices) return false
+        val old = lists[i].url
+        val nu = PlaylistLogic.normalizeUrl(raw) ?: return false
+        if (nu == old) return true
+        if (old.startsWith("file://") || nu.startsWith("file://") || lists.any { it.url == nu }) return false
+        val mode = PlaylistMode.get(c, old)
+        val refresh = PlaylistRefresh.get(c, old)
+        val bk = backups(c, old)
+        lists[i] = PL(lists[i].name, nu)
+        PlaylistMode.set(c, nu, mode)
+        PlaylistRefresh.set(c, nu, refresh)
+        PlaylistRefresh.clear(c, old)
+        prefs(c).edit().remove(backupKey(old)).apply()
+        if (bk.isNotEmpty()) setBackups(c, nu, bk)
+        if (key(old) in multi) multi = multi - key(old) + key(nu)
+        extras.remove(old)
+        deleteFiles(c, old)
+        persist(c)
+        syncFailover(c)
+        return true
+    }
+
     fun remove(c: Context, i: Int) {
         ensure(c)
         if (i !in lists.indices) return

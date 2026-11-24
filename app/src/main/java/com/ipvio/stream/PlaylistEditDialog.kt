@@ -48,6 +48,14 @@ internal fun PlaylistEditDialog(ctx: Context, index: Int, scope: CoroutineScope,
     var shown by remember(url) { mutableStateOf(orig.shown) }
     var refresh by remember(url) { mutableStateOf(orig.refresh) }
     val backups = remember(url) { backupList(orig.backups) }
+    // Address: Xtream as server / user / password, any other link as one field; a playlist file has none
+    val acct = remember(url) { XtreamLogic.fromUrl(url) }
+    val isFile = url.startsWith("file://")
+    var xHost by remember(url) { mutableStateOf(acct?.base.orEmpty()) }
+    var xUser by remember(url) { mutableStateOf(acct?.user.orEmpty()) }
+    var xPass by remember(url) { mutableStateOf(acct?.pass.orEmpty()) }
+    var link by remember(url) { mutableStateOf(if (acct == null && !isFile) url else "") }
+    var urlErr by remember { mutableStateOf<String?>(null) }
     var backupErr by remember { mutableStateOf<String?>(null) }
 
     Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false)) {
@@ -62,6 +70,14 @@ internal fun PlaylistEditDialog(ctx: Context, index: Int, scope: CoroutineScope,
             Text(PlaylistStore.hostOf(url), color = Muted, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Field(name, { name = it }, "Name der Playlist")
+                if (acct != null) {
+                    Field(xHost, { xHost = it; urlErr = null }, "Server (z. B. http://example.com:8080)")
+                    Field(xUser, { xUser = it; urlErr = null }, "Benutzername")
+                    Field(xPass, { xPass = it; urlErr = null }, "Passwort", password = true)
+                } else if (!isFile) {
+                    Field(link, { link = it; urlErr = null }, "Adresse der Playlist")
+                }
+                StatusLine(urlErr, color = Color(0xFFFF8A80), fontSize = 15.sp)
                 SelectRow("Inhalt der Playlist", PlaylistMode.labels[mode], PlaylistMode.labels, mode, active = mode != PlaylistMode.ALL) { mode = it }
                 if (!isActive && orig.shown) {
                     SelectRow("Zusätzlich angezeigt", if (shown) "An" else "Aus", listOf("An", "Aus"), if (shown) 0 else 1) { shown = it == 0 }
@@ -97,11 +113,28 @@ internal fun PlaylistEditDialog(ctx: Context, index: Int, scope: CoroutineScope,
                     val now = PlaylistManageLogic.Draft(name, mode, shown, backups.toList(), refresh)
                     val ch = PlaylistManageLogic.changes(orig, now)
                     if (ch.backups && !backupsValid(backups)) { backupErr = BACKUP_INVALID; return@PillButton }
+                    // New address: checked first, so nothing else is saved for an address that cannot be used
+                    val newUrl = when {
+                        acct != null -> PlaylistLogic.xtreamUrl(xHost, xUser, xPass)?.let { u ->
+                            // Keep the type/output of the stored address when only the login or server changes
+                            if (XtreamLogic.fromUrl(u) == XtreamLogic.fromUrl(url)) url else u
+                        }
+                        isFile -> url
+                        else -> link.trim()
+                    }
+                    if (newUrl == null) { urlErr = "Server, Benutzername und Passwort ausfüllen."; return@PillButton }
+                    val urlChanged = newUrl != url
+                    if (urlChanged && !PlaylistStore.changeUrl(ctx, index, newUrl)) {
+                        urlErr = "Diese Adresse kann nicht verwendet werden (ungültig oder schon als Playlist vorhanden)."; return@PillButton
+                    }
+                    val target = if (urlChanged) newUrl else url
                     if (ch.rename) PlaylistStore.rename(ctx, index, name)
-                    if (ch.backups) PlaylistStore.setBackups(ctx, url, backups.toList())
-                    if (ch.mode) PlaylistMode.set(ctx, url, mode)
-                    if (ch.refresh) { PlaylistRefresh.set(ctx, url, refresh); Updater.apply(ctx) }
+                    if (ch.backups) PlaylistStore.setBackups(ctx, target, backups.toList())
+                    if (ch.mode) PlaylistMode.set(ctx, target, mode)
+                    if (ch.refresh) { PlaylistRefresh.set(ctx, target, refresh); Updater.apply(ctx) }
                     if (ch.shown && !shown) PlaylistStore.setShown(ctx, index, false)
+                    // The main playlist under its new address: load it now (other playlists load when they are used)
+                    if (urlChanged && isActive) scope.launch { PlaylistStore.load(ctx, target, false) }
                     if (ch.mode || ch.shown) scope.launch {
                         // The mode is applied while parsing the stored list again (no download); then the extra lists are rebuilt
                         if (ch.mode && !PlaylistStore.reapplyLanguages(ctx)) PlaylistStore.applyMode(ctx)
