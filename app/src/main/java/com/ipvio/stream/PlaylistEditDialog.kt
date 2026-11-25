@@ -55,10 +55,21 @@ internal fun PlaylistEditDialog(ctx: Context, index: Int, scope: CoroutineScope,
     var shown by remember(url) { mutableStateOf(orig.shown) }
     var refresh by remember(url) { mutableStateOf(orig.refresh) }
     val backups = remember(url) { backupList(orig.backups) }
+    // Address: Xtream as server / user / password, any other link as one field; a playlist file has none
+    val acct = remember(url) { XtreamLogic.fromUrl(url) }
+    val isFile = url.startsWith("file://")
+    var xHost by remember(url) { mutableStateOf(acct?.base.orEmpty()) }
+    var xUser by remember(url) { mutableStateOf(acct?.user.orEmpty()) }
+    var xPass by remember(url) { mutableStateOf(acct?.pass.orEmpty()) }
+    var link by remember(url) { mutableStateOf(if (acct == null && !isFile) url else "") }
+    var urlErr by remember { mutableStateOf<String?>(null) }
     var backupErr by remember { mutableStateOf<String?>(null) }
     val first = remember { FocusRequester() }
 
     Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        // Never taller than the screen: the middle part scrolls, title and the "Apply" / "Cancel" row always stay visible
+        // (on a phone in landscape and on a 1080p TV a fixed 420 dp middle part pushed the buttons off the screen)
+        val maxH = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp - 24).coerceAtLeast(240).dp
         // Focus into the window at once: without it the remote could not reach the fields (OK and D-pad did nothing)
         LaunchedEffect(Unit) { delay(50); runCatching { first.requestFocus() } }
         // Never taller than the screen: the middle part scrolls, title and the "Apply" / "Cancel" row always stay visible
@@ -74,6 +85,14 @@ internal fun PlaylistEditDialog(ctx: Context, index: Int, scope: CoroutineScope,
             CompositionLocalProvider(LocalBringIntoViewSpec provides InstantSpec) {
             Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Field(name, { name = it }, "Name der Playlist", inner = Modifier.focusRequester(first))
+                if (acct != null) {
+                    Field(xHost, { xHost = it; urlErr = null }, "Server (z. B. http://example.com:8080)")
+                    Field(xUser, { xUser = it; urlErr = null }, "Benutzername")
+                    Field(xPass, { xPass = it; urlErr = null }, "Passwort", password = true)
+                } else if (!isFile) {
+                    Field(link, { link = it; urlErr = null }, "Adresse der Playlist")
+                }
+                StatusLine(urlErr, color = Color(0xFFFF8A80), fontSize = 15.sp)
                 SelectRow("Inhalt der Playlist", PlaylistMode.labels[mode], PlaylistMode.labels, mode, active = mode != PlaylistMode.ALL) { mode = it }
                 // T-051 (23 Nov 2026): can be switched on again; the section menus load playlists the same way
                 if (!isActive) {
@@ -111,11 +130,28 @@ internal fun PlaylistEditDialog(ctx: Context, index: Int, scope: CoroutineScope,
                     val now = PlaylistManageLogic.Draft(name, mode, shown, backups.toList(), refresh)
                     val ch = PlaylistManageLogic.changes(orig, now)
                     if (ch.backups && !backupsValid(backups)) { backupErr = BACKUP_INVALID; return@PillButton }
+                    // New address: checked first, so nothing else is saved for an address that cannot be used
+                    val newUrl = when {
+                        acct != null -> PlaylistLogic.xtreamUrl(xHost, xUser, xPass)?.let { u ->
+                            // Keep the type/output of the stored address when only the login or server changes
+                            if (XtreamLogic.fromUrl(u) == XtreamLogic.fromUrl(url)) url else u
+                        }
+                        isFile -> url
+                        else -> link.trim()
+                    }
+                    if (newUrl == null) { urlErr = "Server, Benutzername und Passwort ausfüllen."; return@PillButton }
+                    val urlChanged = newUrl != url
+                    if (urlChanged && !PlaylistStore.changeUrl(ctx, index, newUrl)) {
+                        urlErr = "Diese Adresse kann nicht verwendet werden (ungültig oder schon als Playlist vorhanden)."; return@PillButton
+                    }
+                    val target = if (urlChanged) newUrl else url
                     if (ch.rename) PlaylistStore.rename(ctx, index, name)
-                    if (ch.backups) PlaylistStore.setBackups(ctx, url, backups.toList())
-                    if (ch.mode) PlaylistMode.set(ctx, url, mode)
-                    if (ch.refresh) { PlaylistRefresh.set(ctx, url, refresh); Updater.apply(ctx) }
+                    if (ch.backups) PlaylistStore.setBackups(ctx, target, backups.toList())
+                    if (ch.mode) PlaylistMode.set(ctx, target, mode)
+                    if (ch.refresh) { PlaylistRefresh.set(ctx, target, refresh); Updater.apply(ctx) }
                     if (ch.shown && !shown) PlaylistStore.setShown(ctx, index, false)
+                    // The main playlist under its new address: load it now (other playlists load when they are used)
+                    if (urlChanged && isActive) scope.launch { PlaylistStore.load(ctx, target, false) }
                     // Main list: the mode is applied while parsing the stored list again (no download); retried while a
                     // load runs, in a scope that outlives this window
                     val mainMode = ch.mode && index == PlaylistStore.active

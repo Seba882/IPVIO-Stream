@@ -519,6 +519,13 @@ private fun GeneralPage(ctx: Context) {
     ToggleRow("Beenden bestätigen", "Auf der Startseite muss „Zurück“ zweimal gedrückt werden, damit die App nicht aus Versehen schließt.", General.confirmExit) { General.setConfirmExit(ctx, it) }
     // #95: the device's screensaver or sleep timer is blocked while the app is open (window flag, see ScreenAwake)
     ToggleRow("Bildschirm beim Stöbern wach halten", "An: Der Fernseher geht nicht in den Bildschirmschoner oder Ruhezustand, solange die App offen ist. Aus: nur während der Wiedergabe.", General.keepAwakeBrowse) { General.setKeepAwakeBrowse(ctx, it) }
+    ToggleRow("Trailer automatisch abspielen", "Auf der Detailseite startet der Trailer nach 2 Sekunden hinter dem Titel, solange die Knöpfe oben ausgewählt sind. Braucht einen TMDB-Schlüssel.", General.trailerPreview) { General.setTrailerPreview(ctx, it) }
+    ToggleRow("Länderkürzel in Namen ausblenden", "Zeigt Sender und Kategorien ohne Kürzel am Anfang, z. B. „PL: TVN HD“ als „TVN HD“. Nur die Anzeige ändert sich, Favoriten, Verlauf und Suche bleiben gleich.", General.hidePrefix) { General.setHidePrefix(ctx, it) }
+    // Own texts to remove: saved while typing; the preview shows the effect on a sample name
+    Field(General.removeTexts, { General.setRemoveTexts(ctx, it) }, "Eigene Texte entfernen, z. B. PL VIP:, VIP |, RAW")
+    Hint("Mit Komma trennen. Ein Text wird am Anfang oder am Ende eines Namens entfernt (Groß- und Kleinschreibung egal). Nur die Anzeige ändert sich.")
+    ToggleRow("Trailer auf der Startseite", "Auf der Startseite startet der Trailer des ausgewählten Titels nach 2 Sekunden hinter dem großen Bild. Braucht einen TMDB-Schlüssel.", General.trailerHome) { General.setTrailerHome(ctx, it) }
+    ToggleRow("Titel als Logo", "Auf der Detailseite erscheint der Titel als Logo des Films (von TMDB), wenn es eines gibt. Braucht einen TMDB-Schlüssel.", General.titleLogo) { General.setTitleLogo(ctx, it) }
     // Phone/tablet: landscape (the UI is built for the TV)
     if (MobilePrefs.isMobile(ctx)) {
         val act = generateSequence<Context>(ctx) { (it as? android.content.ContextWrapper)?.baseContext }.filterIsInstance<android.app.Activity>().firstOrNull()
@@ -633,7 +640,7 @@ private fun StoragePage(ctx: Context) {
             val n = withContext(Dispatchers.IO) {
                 runCatching {
                     val bytes = ctx.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return@runCatching -1
-                    if (bytes.size > 4 * 1024 * 1024) -1 else Backup.restoreText(ctx, String(bytes, Charsets.UTF_8))
+                    if (bytes.size > Backup.MAX_BYTES) -1 else Backup.restoreText(ctx, String(bytes, Charsets.UTF_8))
                 }.getOrDefault(-1)
             }
             if (n >= 0) Profiles.restart(ctx) else backupMsg = "Keine gültige Sicherung gefunden."
@@ -1202,14 +1209,21 @@ private fun CategorySearchHits(hits: Map<Kind, List<Pair<String, Int>>>, names: 
 private fun IgnoredGroupsSection(d: IgnoreDraft) {
     // Counting over the whole (unfiltered) list in the background, keyed on that list (not on the filtered one)
     val rawAll = PlaylistStore.unfilteredChannels()
-    val stats by produceState<Map<Kind, List<Pair<String, Int>>>>(emptyMap(), rawAll, PlaylistStore.langCounts) {
+    // Per bundle: number of titles and a few category names of the provider, so a short tag ("SC", "SOC") can be read
+    val stats by produceState<Map<Kind, List<Triple<String, Int, List<String>>>>>(emptyMap(), rawAll, PlaylistStore.langCounts) {
         value = withContext(Dispatchers.Default) {
             val raw = PlaylistStore.unfilteredChannels()
-            val out = LinkedHashMap<Kind, List<Pair<String, Int>>>()
+            val out = LinkedHashMap<Kind, List<Triple<String, Int, List<String>>>>()
             for (k in listOf(Kind.MOVIE, Kind.SERIES, Kind.LIVE)) {
                 val m = HashMap<String, Int>()
-                for (i in raw) if (i.kind == k) { val t = IgnoredGroups.tagOf(i); m[t] = (m[t] ?: 0) + 1 }
-                out[k] = m.entries.sortedWith(compareBy<Map.Entry<String, Int>>({ it.key.isEmpty() }, { -it.value })).take(40).map { it.key to it.value }
+                val ex = HashMap<String, LinkedHashSet<String>>()
+                for (i in raw) if (i.kind == k) {
+                    val t = IgnoredGroups.tagOf(i); m[t] = (m[t] ?: 0) + 1
+                    val e = ex.getOrPut(t) { LinkedHashSet() }
+                    if (e.size < 3 && i.group.isNotBlank()) e.add(i.group.trim())
+                }
+                out[k] = m.entries.sortedWith(compareBy<Map.Entry<String, Int>>({ it.key.isEmpty() }, { -it.value })).take(40)
+                    .map { Triple(it.key, it.value, ex[it.key]?.toList().orEmpty()) }
             }
             out
         }
@@ -1227,11 +1241,11 @@ private fun IgnoredGroupsSection(d: IgnoreDraft) {
     for ((kind, list) in stats) {
         if (list.isEmpty()) continue
         SectionTitle(names.getValue(kind))
-        for ((tag, n) in list) {
+        for ((tag, n, examples) in list) {
             val key = IgnoredGroups.bundleKey(kind, tag)
             ToggleRow(
                 if (tag.isEmpty()) "Ohne Kennung" else tag,
-                n.toString() + " Titel",
+                Lang.tr(n.toString() + " Titel") + (if (examples.isEmpty()) "" else "  ·  " + examples.joinToString(", ") + if (examples.size >= 3) " …" else ""),
                 key !in d.keys
             ) { on -> d.onEdit(if (on) d.keys - key else d.keys + key) }
         }

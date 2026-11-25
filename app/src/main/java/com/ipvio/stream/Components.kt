@@ -206,7 +206,7 @@ fun PosterCard(
                 }
             }
         }
-        Text(raw = true, text = item.title, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, maxLines = titleLines,
+        Text(raw = true, text = ShowName.of(item.title), color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, maxLines = titleLines,
             overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 8.dp))
         val sub = subtitle ?: when (item.kind) {
             Kind.SERIES -> seriesInfo(item)
@@ -240,7 +240,7 @@ fun LiveCard(item: Item, onClick: () -> Unit, modifier: Modifier = Modifier, onL
             contentAlignment = Alignment.Center
         ) {
             if (item.logo != null) ArtImage(item.logo, item.title, Modifier.fillMaxSize().padding(20.dp), contentScale = ContentScale.Fit)
-            else Text(raw = true, text = item.title.take(2).uppercase(), color = Color.White, fontSize = 32.sp, fontWeight = FontWeight.ExtraBold)
+            else Text(raw = true, text = ShowName.of(item.title).take(2).uppercase(), color = Color.White, fontSize = 32.sp, fontWeight = FontWeight.ExtraBold)
             Text("LIVE", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold,
                 modifier = Modifier.align(Alignment.TopStart).padding(10.dp).clip(RoundedCornerShape(DS.RadiusXs))
                     .background(Color(0xFFFF3B5C)).padding(horizontal = 7.dp, vertical = 2.dp))
@@ -249,10 +249,10 @@ fun LiveCard(item: Item, onClick: () -> Unit, modifier: Modifier = Modifier, onL
             if (DeadLinks.isDead(item.url)) AppIcon(AIcon.Warning, DS.Gold, Modifier.align(Alignment.BottomEnd).padding(8.dp), 20.dp)
         }
         Column(Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
-            Text(raw = true, text = item.title, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(raw = true, text = ShowName.of(item.title), color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             // Search (T-051b): the running show and a progress bar; otherwise the channel group
             if (nowTitle != null) Text(raw = true, text = nowTitle, color = Muted, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            else Text(raw = true, text = item.group, color = Muted, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            else Text(raw = true, text = ShowName.of(item.group), color = Muted, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             if (progress != null) Box(Modifier.padding(top = 6.dp).fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)).background(Surf2)) {
                 Box(Modifier.fillMaxWidth(progress.coerceIn(0f, 1f)).fillMaxHeight().background(Accent2))
             }

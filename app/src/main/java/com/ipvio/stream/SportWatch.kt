@@ -130,7 +130,7 @@ internal fun WatchPage(g0: SportData.Game, hub: HubCtx) {
                 FRow({ hub.play(h.ch, hits.map { it.ch }) }) {
                     TeamLogo(h.ch.logo, h.ch.title.take(2), dpx(44))
                     Column(Modifier.weight(1f)) {
-                        Text(raw = true, text = h.ch.title, color = Tok.TextHi, fontSize = spx(18), fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(raw = true, text = ShowName.of(h.ch.title), color = Tok.TextHi, fontSize = spx(18), fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         val why = when (h.why) {
                             0 -> Lang.tr("Von dir zugeordnet")
                             1 -> Lang.tr("Laut TV-Guide") + ": " + h.show
@@ -166,7 +166,7 @@ internal fun ChannelPicker(g: SportData.Game, live: List<Item>, onClose: () -> U
                 itemsIndexed(pool, key = { i, c -> c.id + "#" + i }) { i, c ->
                     FRow({ onPick(c.id) }, req = if (i == 0) first else null) {
                         TeamLogo(c.logo, c.title.take(2), dpx(30))
-                        Text(raw = true, text = c.title, color = Color.White, fontSize = spx(16), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(raw = true, text = ShowName.of(c.title), color = Color.White, fontSize = spx(16), maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 }
             }

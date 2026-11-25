@@ -44,6 +44,12 @@ class Round25Test {
         assertEquals(listOf("5", "7"), r.variants["5"]!!.map { it.id })
     }
 
+    @Test fun untaggedAndProviderPrefixedVariantsJoinOneChannel() {
+        val r = LiveBundleLogic.bundle(listOf(ch("1", "PL: TVN", "pl"), ch("2", "TVN UHD", "?"), ch("3", "PL VIP: TVN FHD", "pl"), ch("4", "TVN 7", "pl")))
+        assertEquals(listOf("2", "4"), r.list.map { it.id })
+        assertEquals(listOf("2", "3", "1"), r.variants["2"]!!.map { it.id })
+    }
+
     @Test fun differentLanguagesAreNotBundled() {
         val r = LiveBundleLogic.bundle(listOf(ch("1", "Sport1 HD", "de"), ch("2", "Sport1", "tr")))
         assertEquals(2, r.list.size)

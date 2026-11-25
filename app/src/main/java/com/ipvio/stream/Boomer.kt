@@ -384,7 +384,7 @@ internal fun BoomerTile(title: String, logo: String?, k: Float, modifier: Modifi
     Column(m, horizontalAlignment = Alignment.CenterHorizontally) {
         Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
             if (Boomer.logos && logo != null) AsyncImage(logo, title, Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
-            else if (Boomer.logos) Text(raw = true, text = title.take(3).uppercase(), color = Color.White, fontSize = spx(72 * k), fontWeight = FontWeight.ExtraBold)
+            else if (Boomer.logos) Text(raw = true, text = ShowName.of(title).take(3).uppercase(), color = Color.White, fontSize = spx(72 * k), fontWeight = FontWeight.ExtraBold)
         }
         if (Boomer.logos) Spacer(Modifier.height(dpx(16 * k)))
         Text(
@@ -607,7 +607,7 @@ private fun PickRow(title: String, sub: String, logo: String?, selected: Boolean
     ) {
         Box(Modifier.size(60.dp).clip(RoundedCornerShape(10.dp)).background(Color(0x14FFFFFF)), contentAlignment = Alignment.Center) {
             if (logo != null) AsyncImage(logo, title, Modifier.fillMaxSize().padding(4.dp), contentScale = ContentScale.Fit)
-            else Text(raw = true, text = title.take(2).uppercase(), color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
+            else Text(raw = true, text = ShowName.of(title).take(2).uppercase(), color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(raw = true, text = title, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)

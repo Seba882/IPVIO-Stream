@@ -37,7 +37,18 @@ data class Meta(
     /** Age rating as shown, e.g. "FSK 12" or "PG-13 (US)", see [AgeRatingLogic]. */
     val age: String? = null,
     /** The age rating was asked for (also true when none exists), so older cache entries load it once. */
-    val ageChecked: Boolean = false
+    val ageChecked: Boolean = false,
+    /** Language of the trailer video (TMDB iso_639_1), null = unknown. */
+    val trailerLang: String? = null,
+    /** TMDB keywords (English names, lower case, at most 25), full entry only. */
+    val keywords: List<String> = emptyList(),
+    /** Christmas title by its TMDB keywords (kept in the slim index too, for the "Christmas" category). */
+    val xmasKw: Boolean = false,
+    /** TMDB collection (saga) of a movie: id kept in the slim index, name and the title logo in the full entry. */
+    val collectionId: Int? = null,
+    val collectionName: String? = null,
+    /** Title logo (TMDB file path, app language, else English, else without text language). */
+    val logo: String? = null
 ) {
     /** Rating for sorting and filtering (0 to 10): first IMDb, then Rotten Tomatoes, then TMDB, last the provider's value. */
     fun score(): Double? =
@@ -72,7 +83,7 @@ object MetaRepo {
     private val slim = ConcurrentHashMap<String, Meta>()
     private val misses: MutableSet<String> = ConcurrentHashMap.newKeySet()
 
-    private fun slimOf(m: Meta) = m.copy(overview = null, trailerKey = null, imdbId = null)
+    private fun slimOf(m: Meta) = m.copy(overview = null, trailerKey = null, imdbId = null, keywords = emptyList(), collectionName = null, logo = null)
     private fun memGet(k: String): Meta? = synchronized(mem) { mem[k] }
     private fun memPut(k: String, m: Meta) { synchronized(mem) { mem[k] = m }; slim[k] = slimOf(m); slimTs[k] = System.currentTimeMillis(); dirty = true }
     /** Time at which the slim entry came from TMDB (for the 30-day refresh) */
@@ -114,7 +125,8 @@ object MetaRepo {
                             (j.str("gids") ?: "").split(",").mapNotNull { it.toIntOrNull() },
                             j.str("lang"), votes = j.optInt("votes"),
                             countries = (j.str("countries") ?: "").split(",").filter { it.isNotBlank() },
-                            uiLang = j.optString("ui", "de"), checked = j.optBoolean("chk")
+                            uiLang = j.optString("ui", "de"), checked = j.optBoolean("chk"),
+                            xmasKw = j.optBoolean("xk"), collectionId = j.optInt("col").takeIf { it > 0 }
                         )
                         slimTs[k] = ts
                     } catch (e: Exception) {
@@ -142,6 +154,8 @@ object MetaRepo {
                     j.put("ext", m.extended); j.put("imdb", m.imdbRating); j.put("rt", m.rtRating)
                     j.put("gids", m.genreIds.joinToString(",")); j.put("lang", m.lang); j.put("votes", m.votes)
                     j.put("countries", m.countries.joinToString(",")); j.put("ui", m.uiLang); j.put("chk", m.checked)
+                    if (m.xmasKw) j.put("xk", true)
+                    m.collectionId?.let { j.put("col", it) }
                     w.write(k); w.write("\t"); w.write(j.toString()); w.write("\n")
                 }
                 for (k in misses) {
@@ -247,6 +261,26 @@ object MetaRepo {
 
     private suspend fun getNow(url: String): String? = withContext(Dispatchers.IO) { httpGet(url) }
 
+    private val collections = ConcurrentHashMap<Int, List<TmdbExtraLogic.Part>>()
+
+    /** Movies of a TMDB collection (saga), in the app language; kept in memory for this session. */
+    suspend fun collectionParts(id: Int): List<TmdbExtraLogic.Part> {
+        collections[id]?.let { return it }
+        if (!enabled()) return emptyList()
+        val body = getNow("https://api.themoviedb.org/3/collection/$id?api_key=${Config.TMDB_KEY}&language=${Lang.tmdb()}") ?: return emptyList()
+        val parts = runCatching {
+            val a = JSONObject(body).optJSONArray("parts")
+            (0 until (a?.length() ?: 0)).mapNotNull { x ->
+                a?.optJSONObject(x)?.let { p ->
+                    TmdbExtraLogic.Part(p.optInt("id"), p.optString("title").takeIf { it.isNotBlank() },
+                        p.optString("original_title").takeIf { it.isNotBlank() }, p.optString("release_date").take(4).toIntOrNull())
+                }
+            }
+        }.getOrDefault(emptyList())
+        if (parts.isNotEmpty()) collections[id] = parts
+        return parts
+    }
+
     private fun dir(c: Context): File = File(c.filesDir, "meta3").also { it.mkdirs() }
 
     private suspend fun save(c: Context, k: String, m: Meta) = withContext(Dispatchers.IO) {
@@ -257,12 +291,14 @@ object MetaRepo {
             j.put("poster", m.poster); j.put("backdrop", m.backdrop); j.put("overview", m.overview)
             j.put("rating", m.rating); j.put("year", m.year)
             j.put("genres", m.genres.joinToString("|")); j.put("runtime", m.runtime)
-            j.put("trailer", m.trailerKey); j.put("imdbId", m.imdbId)
+            j.put("trailer", m.trailerKey); j.put("trailerLang", m.trailerLang); j.put("imdbId", m.imdbId)
             j.put("imdbRating", m.imdbRating); j.put("rt", m.rtRating); j.put("ext", m.extended)
             j.put("gids", m.genreIds.joinToString(",")); j.put("lang", m.lang); j.put("votes", m.votes)
             j.put("countries", m.countries.joinToString(",")); j.put("ui", m.uiLang)
             j.put("chk", m.checked); j.put("v", MATCH_V)
             j.put("age", m.age); j.put("agec", m.ageChecked)
+            j.put("kw", m.keywords.joinToString("|")); j.put("xk", m.xmasKw)
+            j.put("col", m.collectionId ?: 0); j.put("colName", m.collectionName); j.put("logo", m.logo)
             File(dir(c), k.hashCode().toString()).writeText(j.toString())
         } catch (e: Exception) {
         }
@@ -287,7 +323,9 @@ object MetaRepo {
                 countries = (j.str("countries") ?: "").split(",").filter { it.isNotBlank() },
                 uiLang = j.optString("ui", "de"),
                 checked = j.optBoolean("chk"),
-                age = j.str("age"), ageChecked = j.optBoolean("agec")
+                age = j.str("age"), ageChecked = j.optBoolean("agec"), trailerLang = j.str("trailerLang"),
+                keywords = (j.str("kw") ?: "").split("|").filter { it.isNotBlank() }, xmasKw = j.optBoolean("xk"),
+                collectionId = j.optInt("col").takeIf { it > 0 }, collectionName = j.str("colName"), logo = j.str("logo")
             )
         } catch (e: Exception) {
             null
@@ -419,7 +457,8 @@ object MetaRepo {
         val country = AgeRatingLogic.country(Lang.tmdb())
         val body = getNow(
             "https://api.themoviedb.org/3/$type/${b.tmdbId}?api_key=${Config.TMDB_KEY}" +
-                "&language=${Lang.tmdb()}&append_to_response=external_ids,videos$ratings&include_video_language=${Lang.code()},en,null"
+                "&language=${Lang.tmdb()}&append_to_response=external_ids,videos,keywords,images$ratings&include_video_language=${Lang.code()},en,null" +
+                    "&include_image_language=${Lang.code()},en,null"
         ) ?: return b
         var m = b
         try {
@@ -445,15 +484,25 @@ object MetaRepo {
                 o.optJSONArray("episode_run_time")?.let { if (it.length() > 0) it.getInt(0) else null }
             else o.optInt("runtime").takeIf { it > 0 }
             val imdb = if (b.isTv) o.optJSONObject("external_ids")?.str("imdb_id") else o.str("imdb_id")
-            var trailer: String? = null
+            // Trailer in the app language if TMDB has one, otherwise English, otherwise any (TrailerLogic.pick)
+            val vids = ArrayList<TrailerLogic.Video>()
             o.optJSONObject("videos")?.optJSONArray("results")?.let { v ->
                 for (x in 0 until v.length()) {
                     val e = v.getJSONObject(x)
-                    if (e.optString("site") == "YouTube" && e.optString("type") == "Trailer") {
-                        trailer = e.optString("key"); break
-                    }
+                    vids.add(TrailerLogic.Video(e.optString("key"), e.optString("site"), e.optString("type"),
+                        e.optString("iso_639_1").takeIf { it.isNotBlank() && it != "null" }, e.optBoolean("official")))
                 }
             }
+            val chosen = TrailerLogic.pick(vids, Lang.code())
+            val trailer: String? = chosen?.key
+            // Keywords (movies: keywords.keywords, series: keywords.results), collection, title logo: same request
+            val kwJ = o.optJSONObject("keywords")?.let { it.optJSONArray("keywords") ?: it.optJSONArray("results") }
+            val kw = TmdbExtraLogic.keywords((0 until (kwJ?.length() ?: 0)).mapNotNull { kwJ?.optJSONObject(it)?.optString("name") })
+            val col = o.optJSONObject("belongs_to_collection")
+            val logosJ = o.optJSONObject("images")?.optJSONArray("logos")
+            val logo = TmdbExtraLogic.pickLogo((0 until (logosJ?.length() ?: 0)).mapNotNull { x ->
+                logosJ?.optJSONObject(x)?.let { l -> TmdbExtraLogic.Logo(l.optString("file_path"), l.optString("iso_639_1").takeIf { it.isNotBlank() && it != "null" }, l.optDouble("vote_average", 0.0)) }
+            }, Lang.code())
             var ov = o.str("overview")?.takeIf { it.isNotBlank() }
             if (ov == null && Lang.code() != "en") {
                 // TMDB has no text in this language: fetch the English text as a fallback (never keep the text of another language)
@@ -462,7 +511,9 @@ object MetaRepo {
             }
             val age = if (needAge) AgeRatingLogic.pick(ageByCountry(o, b.isTv), country) else b.age
             m = b.copy(overview = ov ?: b.overview.takeIf { b.uiLang == Lang.code() }, genres = genres, runtime = runtime,
-                trailerKey = trailer, imdbId = imdb, uiLang = Lang.code(), checked = true, age = age, ageChecked = needAge || b.ageChecked)
+                trailerKey = trailer, trailerLang = chosen?.lang, imdbId = imdb, uiLang = Lang.code(), checked = true, age = age, ageChecked = needAge || b.ageChecked,
+                keywords = kw, xmasKw = TmdbExtraLogic.isXmas(kw), collectionId = col?.optInt("id")?.takeIf { it > 0 },
+                collectionName = col?.optString("name")?.takeIf { it.isNotBlank() }, logo = logo)
         } catch (e: Exception) {
         }
         if (Config.OMDB_KEY.isNotBlank() && m.imdbId != null) {

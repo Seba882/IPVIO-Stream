@@ -139,7 +139,7 @@ fun Guide(
     var showSettings by remember { mutableStateOf(false) }
     var showSearch by remember { mutableStateOf(false) }
     // Categories on the left (as in the design): current list, all channels, favorites, own lists, provider groups
-    val cats = remember(list, all, Library.favs.size, ChannelLists.lists.size) { guideCategories(list, all) }
+    val cats = remember(list, all, Library.favs.size, ChannelLists.lists.size, AppSettings.ipvioFilter) { guideCategories(list, all) }
     var catIdx by remember { mutableIntStateOf(0) }
     val shown = cats.getOrNull(catIdx)?.items ?: list
     val catReq = remember { FocusRequester() }
@@ -399,7 +399,11 @@ private val BlockLine = Color(0xFF2A2F3B)
 /** A category on the left in the TV guide. */
 class GuideCat(val name: String, val items: List<Item>, val icon: AIcon?)
 
-/** Categories for the TV guide: current list (if different from all), all channels, favorites, own lists, groups. */
+/**
+ * Categories for the TV guide: current list (if different from all), all channels, favorites, own lists, automatic genres
+ * (as in Live TV: sport, movies, documentaries, kids, news, music), then the provider's groups. With "Automatic genres"
+ * switched on the provider's groups are left out, so only the automatic ones remain.
+ */
 fun guideCategories(list: List<Item>, all: List<Item>): List<GuideCat> {
     val out = ArrayList<GuideCat>()
     val allIds = all.size
@@ -412,6 +416,9 @@ fun guideCategories(list: List<Item>, all: List<Item>): List<GuideCat> {
         val items = l.ids.mapNotNull { byId[it] }
         if (items.isNotEmpty()) out.add(GuideCat(l.name, items, AIcon.Lists))
     }
+    // Genre labels are the app's own words (translated): they get an icon, provider groups none
+    for ((k, l) in LiveGenre.listed(all, AppSettings.ipvioFilter)) LiveGenre.byKey(k)?.let { out.add(GuideCat(it.label, l, AIcon.Live)) }
+    if (AppSettings.ipvioFilter) return out
     val groups = LinkedHashMap<String, ArrayList<Item>>()
     for (it in all) groups.getOrPut(it.group) { ArrayList() }.add(it)
     if (groups.size > 1) for ((g, l) in groups) out.add(GuideCat(g, l, null))
@@ -435,7 +442,7 @@ private fun GuideCatRow(c: GuideCat, selected: Boolean, modifier: Modifier, onFo
     ) {
         if (c.icon != null) AppIcon(c.icon, if (c.icon == AIcon.Star) DS.Gold else if (selected) Accent1 else Muted, size = 15.dp)
         // Provider names stay as they are; the app's own labels are translated
-        Text(c.name, color = Color.White, fontSize = 14.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+        Text(ShowName.of(c.name), color = Color.White, fontSize = 14.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
             maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f), raw = c.icon == null || c.icon == AIcon.Lists)
         Text(raw = true, text = c.items.size.toString(), color = Muted, fontSize = 13.sp)
     }
@@ -489,7 +496,7 @@ private fun GuideDetailPanel(e: EpgEntry?, ch: Item?, nowSec: Long, modifier: Mo
                     status, color = if (isNow) OnAccent else Tok.TextMid, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold,
                     modifier = Modifier.clip(RoundedCornerShape(DS.RadiusXs)).background(if (isNow) Accent1 else Color(0x2EFFFFFF)).padding(horizontal = 8.dp, vertical = 3.dp)
                 )
-                Text(raw = true, text = ch.title, color = PT.T2, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                Text(raw = true, text = ShowName.of(ch.title), color = PT.T2, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
                 Text(raw = true, text = "·  ${hhmm(e.start)} – ${hhmm(e.end)}", color = PT.T2, fontSize = 13.sp, style = TNUM, maxLines = 1)
                 Text("·  ${(e.end - e.start) / 60} Min", color = PT.T2, fontSize = 13.sp, maxLines = 1)
                 if (Reminders.isSet(ch.id, e.start)) AppIcon(AIcon.Bell, Accent2, size = 14.dp)
@@ -579,7 +586,7 @@ private fun GuideRow(
                 if (ch.logo != null) AsyncImage(ch.logo, null, Modifier.fillMaxSize().padding(3.dp), contentScale = ContentScale.Fit)
             }
             Text(
-                ch.title, color = Color.White, fontSize = 14.sp,
+                ShowName.of(ch.title), color = Color.White, fontSize = 14.sp,
                 fontWeight = if (current || f) FontWeight.ExtraBold else FontWeight.Medium, maxLines = 2, overflow = TextOverflow.Ellipsis
             )
         }

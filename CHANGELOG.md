@@ -1,6 +1,29 @@
 # Changelog
 
 ## Unreleased
+- TVs with little memory (up to 3 GB): animations Off and no automatic change of the home banner by default; a value chosen in Settings is kept (from the SageIPTV fork, measured 91 % janky frames on a 1.8 GB Google TV)
+- Xtream: the very first load of a login fetches only the channels, so the app opens after the short part of the download; movies and series follow right afterwards in the background. If the provider does not allow the shortcut, the usual full load runs (from the nxsreto fork, "TV first")
+- TV guide (EPG): the read guide (shows, channel matches, logos) is stored on the device and shown at once after a restart, for up to 36 hours. It is read again every 12 hours, also while the app keeps running (checked every 30 minutes), and when the channel list changes. The guide on screen stays until the new one is complete, so shows and logos no longer disappear during an update; a failed update keeps the old guide. Not device tested yet
+- TV guide (EPG): a downloaded guide file is kept and read again for 12 hours, so the app no longer downloads the whole guide at every start. "Reload" and "Save & load" in the EPG settings always download it fresh. If a download fails, a stored copy up to 7 days old is used. Not device tested yet
+- Channel logos: a channel without a logo in its playlist now shows the icon of its guide channel (XMLTV `icon`). With a Russian provider list and epg.one, 2283 of 2316 channels got a logo (measured outside the app). Not device tested yet
+- Detail page: the trailer plays behind the header after 2 seconds while the buttons at the top are selected, like Prime Video ("Play trailers automatically", on by default). The WebView sits under the page as a plain Android view: inside Compose the video stayed black on Fire TV and Shield (sound only, T-032). YouTube's own overlays are cropped. Tested on a phone, Fire TV Stick and Shield
+- Home screen: option "Trailer on the home screen" (off by default): the trailer of the selected title plays behind the big picture
+- Trailers: TMDB trailer in the app language first, then English; player language and subtitles (app language preferred) when the trailer is in another language
+- Detail page: the title can show as the movie's logo from TMDB ("Title as logo", on by default); text title as fallback
+- Detail page: "From the collection …" row with the other parts of a saga that are in the playlist, in saga order (TMDB collections, matched by TMDB id or by title and year)
+- Movies and series: seasonal "Christmas" entry in the categories (15 November – 6 January), by title, provider category or TMDB keywords
+- Lists: "Without" filter to leave out one or more genres (for example everything but animation)
+- Movies: "Audio tracks" filter. "Check languages" reads the audio and subtitle languages from the files of the shown list (one title at a time, kept on the device, stops when playback starts); then "audio or subtitles" in the app language filters the list
+- Names: "Hide country prefix in names" (off by default) removes a leading country tag such as "PL:", "|PL|" or "PL VIP:" from channel and category names (display only); "Remove own texts" removes the user's own texts at the start or end of names
+- Channel bundling: provider prefixes like "PL VIP:" and variants without a language tag join one channel, best quality first
+- Live TV and TV guide: with "Automatic genres" on, only the automatic genres are listed (plus "Other channels"); more genres ("Entertainment", "Lifestyle") and Polish group names are recognised
+- Playlists: the "Edit" window can change the address (Xtream server, user name, password, or the M3U link); settings of the playlist move along. Favourites of Xtream playlists do not follow a changed address
+- Playlists: the "Edit" window never gets taller than the screen, so "Apply" and "Cancel" stay visible (phone in landscape, 1080p TV)
+- Phone page: uploading a playlist file, a list or a VPN configuration did nothing (a missing brace in the page script). Fixed; a progress bar with percent and MB shows while sending
+- Backup with playlists: also carries playlists loaded from a file (packed) and the own API keys (filled in only where missing); size limit 24 MB instead of 4 MB
+- Load errors: unexpected errors name the place in the app (file:line)
+- Polish: every dictionary text has a Polish translation, including the phone pages
+- CI: GitHub Actions on Node 24 (checkout v7, setup-java v6, setup-gradle v6, upload-artifact v7)
 
 ## 1.5.1 (versionCode 17)
 - "What's new" after the update: Trakt first, then the most important changes and fixes of 1.5.0 and 1.5.1 (1.5.0 had no notes)
@@ -54,7 +77,6 @@
 - Live TV: new setting "Up goes to the next channel" (Settings > Live TV, Channel keys). Off by default: Up = previous channel, Down = next channel, as before. Not device tested yet
 - Live TV: the player now stops the sound when it closes or the second picture is closed, before it releases the player (T-051, analysis only, cause not confirmed). Not device tested yet
 - Live TV: when zapping, only one channel buffer is filled at a time, and the cache folder is no longer deleted on the UI thread for every channel change (T-054; freeze not reproduced, cause not confirmed). Not device tested yet
-- Home: "Because you watched" shows once 2 similar titles are in your playlist (was 4) (T-053). Not device tested yet
 - Sports Hub: Back from a channel started in the hub returns to the hub (same tab and page), not to the Live TV channel list. Not device tested yet
 - Sports Hub, "Channels" tab, tidier: date stepper and one "Settings" button (notifications, delay, live results) instead of eleven buttons; the mini score settings are settings rows (window, position, size, display, game clock); leagues and teams show a check or star icon instead of a text symbol. Not device tested yet
 - Sports Hub, fewer buttons: the tabs have icons; "Live" has one row with a "Sport" button, a "Competition" button (each opens a list) and a star for favorites only, instead of two rows of pills; the schedule shows the date and the "Sport" button; the score overlay is a small icon at the end of the tab row. Not device tested yet

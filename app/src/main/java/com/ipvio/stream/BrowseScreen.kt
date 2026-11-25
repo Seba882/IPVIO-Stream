@@ -51,6 +51,8 @@ class BrowseState(req0: BrowseReq) {
     var minRi by mutableIntStateOf(0)
     var year by mutableStateOf("Alle")
     var genre by mutableStateOf<String?>(null)
+    /** Genres to leave out ("all but animation"); several at once. */
+    var notGenres by mutableStateOf<Set<String>>(emptySet())
     var country by mutableStateOf<String?>(null)
     /** Language filter (code from [LangTagLogic], "?" = untagged), null = all. Saved per type in [BrowseLangPrefs]. */
     var lang by mutableStateOf<String?>(null)
@@ -58,6 +60,8 @@ class BrowseState(req0: BrowseReq) {
     internal var genreInit = false
     /** Source with several playlists: -1 = all, otherwise index into [PlaylistStore.sourceNames]. */
     var source by mutableIntStateOf(-1)
+    /** Only titles with the app language as audio or subtitles (from the language check, [LangScan]). */
+    var tracks by mutableStateOf(false)
     var focused by mutableIntStateOf(0)
     /** State of the genre detection with which it was sorted. New info re-sorts only on request (no reordering under the cursor). */
     var ver by mutableIntStateOf(Classifier.version)
@@ -67,7 +71,8 @@ class BrowseState(req0: BrowseReq) {
     internal var lastFacets: Pair<Int, Facets>? = null
 }
 
-internal data class BrowseKey(val sort: Int, val minRi: Int, val year: String, val genre: String?, val country: String?, val ver: Int, val source: Int = -1, val lang: String? = null)
+internal data class BrowseKey(val sort: Int, val minRi: Int, val year: String, val genre: String?, val country: String?, val ver: Int, val source: Int = -1, val lang: String? = null,
+    val tracks: Boolean = false, val scanVer: Int = 0, val notGenres: Set<String> = emptySet())
 
 /** Choices for the filters (genres, countries, years) – from the titles of the list. */
 internal class Facets(val genres: List<String>, val countries: List<Pair<String, String>>, val years: List<String>)
@@ -144,14 +149,17 @@ private fun ofSource(items: List<Item>, k: Int): List<Item> {
     return items.mapNotNull { i -> (if (PlaylistStore.inSource(i, k)) i else PlaylistStore.twin(i, k))?.takeIf { seen.add(it.id) } }
 }
 
-private fun filterAndSort(items: List<Item>, k: BrowseKey): List<Item> {
+private fun filterAndSort(items: List<Item>, k: BrowseKey, keep: ((Item) -> Boolean)? = null): List<Item> {
     val minR = RATING_VALUES[k.minRi]
     val f = ofSource(items, k.source).filter { i ->
+        if (keep != null && !keep(i)) return@filter false
         val m = MetaRepo.cached(i)
         val r = m?.score() ?: 0.0
         r >= minR &&
             (k.year == "Alle" || yearMatches(k.year, yearOf(i))) &&
             (k.genre == null || (m != null && Genres.categoriesOf(m).contains(k.genre))) &&
+            // Left out genres: titles without known genres stay (nothing to say they are animation)
+            (k.notGenres.isEmpty() || m == null || Genres.categoriesOf(m).none { it in k.notGenres }) &&
             (k.country == null || (m != null && m.countries.contains(k.country))) &&
             (k.lang == null || i.lang == k.lang)
     }
@@ -217,12 +225,22 @@ var restoreIdx by remember { mutableIntStateOf(state.focused) }
     // Restore the saved language once, before the first list is computed
     remember(state) { if (!state.langInit) { state.langInit = true; state.lang = BrowseLangPrefs.get(ctx, browseKind) }; 0 }
     val langOptions = remember(req) { BrowseLangPrefs.available(req.items) }
-    val key = BrowseKey(state.sort, state.minRi, state.year, state.genre, state.country, ver, state.source, state.lang)
+    // Track languages (movies only): the app language as audio or subtitles, from the language check
+    val uiLang = Lang.code()
+    val key = BrowseKey(state.sort, state.minRi, state.year, state.genre, state.country, ver, state.source, state.lang,
+        state.tracks, if (state.tracks) LangScan.version else 0, state.notGenres)
     val listOrNull by produceState(state.lastList?.takeIf { state.lastKey == key }, req, key) {
-        value = withContext(Dispatchers.Default) { filterAndSort(req.items, key) }.also { state.lastKey = key; state.lastList = it }
+        val keep: ((Item) -> Boolean)? = if (key.tracks) { i -> LangScan.result(ctx, i)?.has(uiLang) == true } else null
+        value = withContext(Dispatchers.Default) { filterAndSort(req.items, key, keep) }.also { state.lastKey = key; state.lastList = it }
     }
     val list = listOrNull.orEmpty()
     val ready = listOrNull != null
+    // The list with every other filter (sort, rating, year, genre, language tag …) but without the track filter: the
+    // language check works on exactly the titles shown, not on the whole section (which can be tens of thousands)
+    val untracked = key.copy(tracks = false, scanVer = 0)
+    val scanBase by produceState<List<Item>?>(null, req, untracked, state.tracks, listOrNull) {
+        value = if (!state.tracks) listOrNull else withContext(Dispatchers.Default) { filterAndSort(req.items, untracked) }
+    }
 
     LaunchedEffect(ready) {
         if (!ready) return@LaunchedEffect
@@ -299,6 +317,15 @@ var restoreIdx by remember { mutableIntStateOf(state.focused) }
                             state.genre = if (it == 0) null else go[it]
                         }
                     }
+                    // "Without": every pick toggles one genre; several can be left out at once
+                    if (genres.isNotEmpty()) item {
+                        val nx = state.notGenres
+                        val opts = listOf(Lang.tr("Nichts ausblenden")) + genres.map { g -> (if (g in nx) "✓ " else "") + Lang.tr(g) }
+                        val value = when (nx.size) { 0 -> Lang.tr("Nichts ausblenden"); 1 -> Lang.tr(nx.first()); else -> Lang.tr(nx.first()) + " +" + (nx.size - 1) }
+                        DropdownPill("Ohne", value, opts, 0, active = nx.isNotEmpty(), icon = FIcon.Genre) {
+                            state.notGenres = if (it == 0) emptySet() else genres[it - 1].let { g -> if (g in nx) nx - g else nx + g }
+                        }
+                    }
                     if (countries.isNotEmpty()) item {
                         val co = listOf("Alle") + countries.map { it.second }
                         val idx = countries.indexOfFirst { it.first == state.country } + 1
@@ -315,6 +342,28 @@ var restoreIdx by remember { mutableIntStateOf(state.focused) }
                             BrowseLangPrefs.set(ctx, browseKind, state.lang)
                         }
                     }
+                    // Audio / subtitle languages read from the files (movies): filter by the app language, or start the check
+                    if (browseKind == Kind.MOVIE) item {
+                        val langName = I18nCore.NATIVE.getOrElse(I18nCore.CODES.indexOf(uiLang)) { uiLang }
+                        val base = scanBase.orEmpty()
+                        val checked = remember(base, LangScan.version) { LangScan.checked(ctx, base) }
+                        // While a check runs, the same entry stops it
+                        val check = if (LangScan.running) Lang.tr("Prüfung anhalten")
+                            else Lang.tr("Sprachen prüfen") + " (" + checked + "/" + base.size + ")"
+                        val to = listOf(Lang.tr("Alle"), langName + ": " + Lang.tr("Ton oder Untertitel"), check)
+                        val value = if (LangScan.running) Lang.tr("Sprachen werden geprüft") + " " + LangScan.done + "/" + LangScan.total
+                            else to[if (state.tracks) 1 else 0]
+                        DropdownPill("Tonspuren", value, to, if (state.tracks) 1 else 0, active = state.tracks || LangScan.running, icon = FIcon.Language) {
+                            when (it) {
+                                0 -> state.tracks = false
+                                1 -> state.tracks = true
+                                else -> when {
+                                    LangScan.running -> LangScan.stop()
+                                    scanBase != null -> { LangScan.start(ctx, base); state.tracks = true }
+                                }
+                            }
+                        }
+                    }
                     // Several playlists at once: filter by source
                     val srcNames = PlaylistStore.sourceNames
                     if (srcNames.size > 1) item {
@@ -324,7 +373,7 @@ var restoreIdx by remember { mutableIntStateOf(state.focused) }
                     }
                     item {
                         FilterPill("Zurücksetzen", false, icon = FIcon.Reset) {
-                            state.minRi = 0; state.year = "Alle"; state.genre = null; state.country = null; state.lang = null; BrowseLangPrefs.set(ctx, browseKind, null); state.source = -1; state.sort = defaultSort(req.sort)
+                            state.minRi = 0; state.year = "Alle"; state.genre = null; state.country = null; state.lang = null; BrowseLangPrefs.set(ctx, browseKind, null); state.source = -1; state.tracks = false; state.notGenres = emptySet(); state.sort = defaultSort(req.sort)
                         }
                     }
                     // View and grid: rarely needed, hence at the very end
@@ -351,7 +400,7 @@ var restoreIdx by remember { mutableIntStateOf(state.focused) }
                 if (ready && list.isEmpty()) Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     EmptyState(AIcon.Sliders, "Keine Treffer", "Mit diesen Filtern gibt es hier keine Titel.", action = "Filter zurücksetzen") {
                         runCatching { filterFocus.requestFocus() }
-                        state.minRi = 0; state.year = "Alle"; state.genre = null; state.country = null; state.lang = null; BrowseLangPrefs.set(ctx, browseKind, null); state.source = -1; state.sort = defaultSort(req.sort)
+                        state.minRi = 0; state.year = "Alle"; state.genre = null; state.country = null; state.lang = null; BrowseLangPrefs.set(ctx, browseKind, null); state.source = -1; state.tracks = false; state.notGenres = emptySet(); state.sort = defaultSort(req.sort)
                     }
                 }
                 if (!ready) {

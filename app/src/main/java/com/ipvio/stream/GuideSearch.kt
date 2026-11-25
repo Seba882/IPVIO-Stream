@@ -108,7 +108,7 @@ fun GuideSearchDialog(channels: List<Item>, onPick: (Item) -> Unit, onClose: () 
                             .clickable { onPick(h.channel) }
                             .padding(horizontal = 14.dp, vertical = 10.dp)
                     ) {
-                        Text(raw = true, text = e?.title ?: h.channel.title, color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.SemiBold,
+                        Text(raw = true, text = e?.title ?: ShowName.of(h.channel.title), color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.SemiBold,
                             maxLines = 1, overflow = TextOverflow.Ellipsis)
                         Text(
                             raw = true,

@@ -37,6 +37,11 @@ This file is the contract for what the app must keep doing. A feature is removed
 
 | Feature | Code anchor | Code present | Device tested | Notes |
 |---|---|---|---|---|
+| Trailer behind the detail page header (Prime Video style) and on the home screen | `TrailerPreview.kt`, `TrailerLogic.kt` | yes | yes | WebView under the Compose view with a hole in the backgrounds (`TrailerHole`); see CHANGELOG |
+| Title logo, collections, TMDB keywords | `Meta.kt`, `TmdbExtraLogic.kt` | yes | no | Same TMDB request (`keywords`, `images`); collection parts from `/collection/{id}` |
+| Christmas collection | `SeasonLogic.kt` | yes | no | 15 Nov – 6 Jan, by name, provider category or TMDB keywords |
+| Audio / subtitle language check of a list | `LangScan.kt`, `LangScanLogic.kt` | yes | no | Reads the file header via `MediaProbe`; results kept on the device |
+| Hide country prefix, own texts to remove (display only) | `ShowName.kt`, `NameCleanLogic.kt`, `LangTagLogic.kt` | yes | no | |
 | Home screen | `HomeScreen.kt`, `HomeParts.kt` | yes | unknown | Reported as lost after updates, see Known issues |
 | Favorites for channels, movies and series | `Store.kt` (`Library`), `CatFavs.kt` | yes | unknown | |
 | Manual order of favorites | `FavOrderLogic.kt`, `FavReorder.kt` | yes | no | T-014 and T-018 |
