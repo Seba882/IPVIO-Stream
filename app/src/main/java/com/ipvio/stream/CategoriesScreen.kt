@@ -188,7 +188,7 @@ fun CategoriesScreen(
             if (mode == 0 && req.ipvio.isEmpty()) {
                 AutoGenresOff()
                 // The Christmas collection needs no automatic genres: offer it here too
-                if (xmas.isNotEmpty()) PillButton(Lang.tr(CAT_XMAS) + " (" + xmas.size + ")", modifier = Modifier.padding(top = 12.dp), raw = true) { onPick(CAT_XMAS, xmas, req.sort) }
+                if (xmas.isNotEmpty()) PillButton(Lang.tr(CAT_XMAS) + " (" + xmas.size + ")", modifier = Modifier.padding(top = 12.dp), raw = true) { onPick(CAT_XMAS, xmas, req.sort, null) }
             }
             else {
                 if (mode == 0 && Classifier.running) Text("Genres werden gerade im Hintergrund erkannt. Die Kategorien erscheinen nach und nach.", color = Muted, fontSize = 14.sp, modifier = Modifier.padding(bottom = 8.dp))
