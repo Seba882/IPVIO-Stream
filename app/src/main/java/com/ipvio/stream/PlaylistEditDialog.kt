@@ -72,9 +72,6 @@ internal fun PlaylistEditDialog(ctx: Context, index: Int, scope: CoroutineScope,
         val maxH = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp - 24).coerceAtLeast(240).dp
         // Focus into the window at once: without it the remote could not reach the fields (OK and D-pad did nothing)
         LaunchedEffect(Unit) { delay(50); runCatching { first.requestFocus() } }
-        // Never taller than the screen: the middle part scrolls, title and the "Apply" / "Cancel" row always stay visible
-        // (on a phone in landscape and on a 1080p TV a fixed 420 dp middle part pushed the buttons off the screen)
-        val maxH = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp - 24).coerceAtLeast(240).dp
         Column(
             Modifier.width(760.dp).heightIn(max = maxH).clip(RoundedCornerShape(DS.RadiusL)).background(Tok.GlassStrong).padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
