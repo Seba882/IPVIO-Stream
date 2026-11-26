@@ -16,11 +16,31 @@ jobs:
           distribution: temurin
           java-version: '21'
       - uses: gradle/actions/setup-gradle@v6
+      # Personal build: sign the test APK with a fixed key from the repository secrets, so updates install over the old
+      # version. Skipped (usual debug key) when the secrets are not set, e.g. on pull requests.
+      - name: Write signing configuration (optional)
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$STORE_PASSWORD" ] || [ -z "$KEY_ALIAS" ] || [ -z "$KEY_PASSWORD" ]; then
+            echo "No signing secrets: using the debug key"; exit 0
+          fi
+          printf '%s' "$KEYSTORE_BASE64" | base64 -d > ipvio-release.jks
+          printf 'storeFile=ipvio-release.jks\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' \
+            "$STORE_PASSWORD" "$KEY_ALIAS" "$KEY_PASSWORD" > keystore.properties
+          echo "Signing with the fixed key"
       - name: Make Gradle wrapper executable
         run: chmod +x gradlew
       - name: Unit tests
         run: ./gradlew --no-daemon testDebugUnitTest
       - name: Build debug APK
+        # Optional own API keys built in (repository secrets); empty = enter them in the app as before
+        env:
+          TMDB_KEY: ${{ secrets.TMDB_KEY }}
+          OMDB_KEY: ${{ secrets.OMDB_KEY }}
         run: ./gradlew --no-daemon assembleDebug
       - uses: actions/upload-artifact@v7
         with:
