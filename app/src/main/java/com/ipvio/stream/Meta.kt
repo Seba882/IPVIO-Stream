@@ -83,7 +83,8 @@ object MetaRepo {
     private val slim = ConcurrentHashMap<String, Meta>()
     private val misses: MutableSet<String> = ConcurrentHashMap.newKeySet()
 
-    private fun slimOf(m: Meta) = m.copy(overview = null, trailerKey = null, imdbId = null, keywords = emptyList(), collectionName = null, logo = null)
+    // The logo stays in the slim index (one short path): the detail page shows it right away, not only after the full entry
+    private fun slimOf(m: Meta) = m.copy(overview = null, trailerKey = null, imdbId = null, keywords = emptyList(), collectionName = null)
     private fun memGet(k: String): Meta? = synchronized(mem) { mem[k] }
     private fun memPut(k: String, m: Meta) { synchronized(mem) { mem[k] = m }; slim[k] = slimOf(m); slimTs[k] = System.currentTimeMillis(); dirty = true }
     /** Time at which the slim entry came from TMDB (for the 30-day refresh) */
@@ -126,7 +127,7 @@ object MetaRepo {
                             j.str("lang"), votes = j.optInt("votes"),
                             countries = (j.str("countries") ?: "").split(",").filter { it.isNotBlank() },
                             uiLang = j.optString("ui", "de"), checked = j.optBoolean("chk"),
-                            xmasKw = j.optBoolean("xk"), collectionId = j.optInt("col").takeIf { it > 0 }
+                            xmasKw = j.optBoolean("xk"), collectionId = j.optInt("col").takeIf { it > 0 }, logo = j.str("logo")
                         )
                         slimTs[k] = ts
                     } catch (e: Exception) {
@@ -156,6 +157,7 @@ object MetaRepo {
                     j.put("countries", m.countries.joinToString(",")); j.put("ui", m.uiLang); j.put("chk", m.checked)
                     if (m.xmasKw) j.put("xk", true)
                     m.collectionId?.let { j.put("col", it) }
+                    m.logo?.let { j.put("logo", it) }
                     w.write(k); w.write("\t"); w.write(j.toString()); w.write("\n")
                 }
                 for (k in misses) {

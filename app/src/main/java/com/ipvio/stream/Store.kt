@@ -744,18 +744,34 @@ object Classifier {
      * so that after a filter change the old list never keeps running or the new one is skipped.
      * Runs on a background thread, not on the main thread.
      */
-    fun restart(ctx: Context, all: List<Item>) {
+    fun restart(ctx: Context, all: List<Item>, force: Boolean = false) {
         val app = ctx.applicationContext
         val old = job
         job = scope.launch {
             old?.cancelAndJoin()
             if (!MetaRepo.enabled() || all.isEmpty()) return@launch
-            run(app, all.filter { it.kind == Kind.SERIES } + all.filter { it.kind == Kind.MOVIE })
+            run(app, all.filter { it.kind == Kind.SERIES } + all.filter { it.kind == Kind.MOVIE }, force)
         }
     }
 
-    private suspend fun run(ctx: Context, items: List<Item>) {
-        if (!MetaRepo.enabled() || !supported(items.size)) return
+    /** True while a pass started by hand is running (Settings: "Fetch title information"). */
+    var manual by mutableStateOf(false)
+        private set
+
+    /**
+     * Fetches the title information of the shown titles by hand, also for libraries above [MAX_TITLES]: hidden categories
+     * and languages are left out (the list already is the shown one), so a large library can be covered in parts.
+     */
+    fun fetchNow(ctx: Context, all: List<Item>) {
+        if (running) return
+        manual = true
+        restart(ctx, all, force = true)
+    }
+
+    fun stop() { job?.cancel(); job = null }
+
+    private suspend fun run(ctx: Context, items: List<Item>, force: Boolean = false) {
+        if (!MetaRepo.enabled() || (!force && !supported(items.size))) return
         running = true
         try {
             // Load stored results in one go (instead of one file per title): only really new titles are queried
@@ -796,6 +812,7 @@ object Classifier {
             if (need.isNotEmpty()) version++
         } finally {
             running = false
+            manual = false
             kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) { MetaRepo.saveIndex(ctx) }
         }
     }

@@ -729,6 +729,9 @@ object PlaylistStore {
         prefs(c).edit().putString("cnt_" + key(url), PlaylistCountLogic.encode(t)).apply()
     }
 
+    /** True while the stored counts are from a "TV first" load: movies and series are still being fetched. */
+    fun typeCountsPartial(c: Context, url: String): Boolean = prefs(c).getBoolean("cntq_" + key(url), false)
+
     fun typeCounts(c: Context, url: String): PlaylistCountLogic.TypeCounts? =
         PlaylistCountLogic.decode(prefs(c).getString("cnt_" + key(url), null))
     private fun gzFile(c: Context, url: String) = File(c.filesDir, "pl_" + key(url) + ".m3u.gz")
@@ -1911,7 +1914,9 @@ object PlaylistStore {
                 val order = fetchOrder(u)
                 phase = "Playlist wird gespeichert …"
                 writeCache(c, u, parsed.items, urls, order, parsed.counts, parsed.bytes, b.hidden)
+                // "TV first": the counts of this load hold only the channels; mark them, so the settings say so
                 saveTypeCounts(c, u, parsed.items)
+                prefs(c).edit().putBoolean("cntq_" + key(u), wasQuick).apply()
                 Catchup.saveParsed(c, u, parsed.catchup)
                 commitGz(c, u, gzTmp)
                 val list = parsed.items

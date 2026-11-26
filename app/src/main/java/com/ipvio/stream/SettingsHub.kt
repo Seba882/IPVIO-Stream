@@ -1095,6 +1095,11 @@ private fun GenresFilterBlock(ctx: Context) {
     Hint("Automatische Genres sortieren Titel nach Genre (Anime = Animation aus Japan). Beim ersten Mal dauert das einige Minuten, danach ist alles gespeichert. Aus = die Kategorien deines Anbieters in der Reihenfolge deines Anbieters. In der Ansicht „Kategorien“ kannst du jederzeit zwischen beiden wechseln.")
     if (!MetaRepo.enabled()) Text("Automatische Genres brauchen einen TMDB-Schlüssel (Einstellungen > API-Schlüssel).", color = DS.Danger, fontSize = 15.sp)
     if (Classifier.running) Text("${Classifier.phase} werden geladen … ${Classifier.progress} / ${Classifier.total}", color = Accent2, fontSize = 15.sp)
+    // By hand, also for large libraries: only the shown titles (hidden categories and languages are already filtered out)
+    Hint("„Titel-Infos holen“ lädt Genres, Bilder, Beschreibungen und Trailer der angezeigten Titel – auch bei großen Bibliotheken. Blende zuerst unter „Kategorien ein- und ausblenden“ und „Sprachen der Inhalte“ aus, was du nicht brauchst, dann geht es schneller. Läuft im Hintergrund und pausiert während der Wiedergabe.")
+    PillButton(if (Classifier.running) Lang.tr("Holen anhalten") else Lang.tr("Titel-Infos holen ({0})").replace("{0}", vod.toString()), raw = true) {
+        if (Classifier.running) Classifier.stop() else Classifier.fetchNow(ctx, all)
+    }
 }
 
 /** Unsaved "ignore" switches of the filter page, shared by both sections. */
@@ -1373,7 +1378,10 @@ private fun PlaylistPage(ctx: Context, onAdd: () -> Unit, reload: () -> Unit, on
                     color = if (plMode != PlaylistMode.ALL) Accent2 else Muted, fontSize = 13.sp, maxLines = 1, raw = true)
                 // #111: channels, movies and series of this playlist as last loaded (nothing until it is loaded once)
                 PlaylistStore.typeCounts(ctx, pl.url)?.let { t ->
-                    Text(PlaylistCountLogic.summary(t, Lang.tr("Live TV"), Lang.tr("Filme"), Lang.tr("Serien")), color = Muted, fontSize = 13.sp, maxLines = 1)
+                    val partial = PlaylistStore.typeCountsPartial(ctx, pl.url) && t.movies == 0 && t.series == 0
+                    Text(PlaylistCountLogic.summary(t, Lang.tr("Live TV"), Lang.tr("Filme"), Lang.tr("Serien")) +
+                        (if (partial) "  ·  " + Lang.tr("Filme und Serien werden noch geladen") else ""),
+                        color = if (partial) Accent2 else Muted, fontSize = 13.sp, maxLines = 1, raw = true)
                 }
                 val nb = PlaylistStore.backups(ctx, pl.url).size
                 if (nb > 0) Text("Backup-Server: $nb", color = Muted, fontSize = 13.sp, maxLines = 1)

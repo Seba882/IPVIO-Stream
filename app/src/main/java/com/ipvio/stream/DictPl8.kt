@@ -305,4 +305,8 @@ Gespeicherte Playlists verschwinden auf manchen Boxen nach einem Neustart nicht 
 Hochladen über die Handy-Seite funktioniert wieder¦Wysyłanie przez stronę na telefonie znów działa
 Inhaltsmodus „Live TV + Filme & Serien“ wirkt sofort, auch während die Playlist lädt¦Tryb zawartości „TV na żywo + filmy i seriale” działa od razu, także podczas wczytywania playlisty
 Import & Trakt (Letterboxd, MyAnimeList, Trakt)¦Import i Trakt (Letterboxd, MyAnimeList, Trakt)
+Titel-Infos holen ({0})¦Pobierz informacje o tytułach ({0})
+Holen anhalten¦Zatrzymaj pobieranie
+„Titel-Infos holen“ lädt Genres, Bilder, Beschreibungen und Trailer der angezeigten Titel – auch bei großen Bibliotheken. Blende zuerst unter „Kategorien ein- und ausblenden“ und „Sprachen der Inhalte“ aus, was du nicht brauchst, dann geht es schneller. Läuft im Hintergrund und pausiert während der Wiedergabe.¦„Pobierz informacje o tytułach” wczytuje gatunki, obrazy, opisy i zwiastuny wyświetlanych tytułów, także przy dużych bibliotekach. Najpierw ukryj to, czego nie potrzebujesz, w „Pokaż i ukryj kategorie” oraz „Języki treści” – wtedy pójdzie szybciej. Działa w tle i wstrzymuje się podczas odtwarzania.
+Filme und Serien werden noch geladen¦filmy i seriale jeszcze się wczytują
 """

@@ -47,4 +47,8 @@ Titel als Logo¦العنوان كشعار
 Auf der Detailseite erscheint der Titel als Logo des Films (von TMDB), wenn es eines gibt. Braucht einen TMDB-Schlüssel.¦في صفحة التفاصيل يظهر العنوان كشعار الفيلم (من TMDB) إن وُجد. يتطلب مفتاح TMDB.
 Ohne¦بدون
 Nichts ausblenden¦لا تخفِ شيئًا
+Titel-Infos holen ({0})¦جلب معلومات العناوين ({0})
+Holen anhalten¦إيقاف الجلب
+„Titel-Infos holen“ lädt Genres, Bilder, Beschreibungen und Trailer der angezeigten Titel – auch bei großen Bibliotheken. Blende zuerst unter „Kategorien ein- und ausblenden“ und „Sprachen der Inhalte“ aus, was du nicht brauchst, dann geht es schneller. Läuft im Hintergrund und pausiert während der Wiedergabe.¦«جلب معلومات العناوين» يحمّل الأنواع والصور والأوصاف والإعلانات الترويجية للعناوين المعروضة، حتى مع المكتبات الكبيرة. أخفِ أولًا ما لا تحتاجه في «إظهار الفئات وإخفاؤها» و«لغات المحتوى»، فيصبح أسرع. يعمل في الخلفية ويتوقف مؤقتًا أثناء التشغيل.
+Filme und Serien werden noch geladen¦الأفلام والمسلسلات ما زالت قيد التحميل
 """
