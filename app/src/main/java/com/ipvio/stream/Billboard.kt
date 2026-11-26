@@ -135,8 +135,14 @@ fun BillboardInfo(item: Item, modifier: Modifier = Modifier) {
             // The info block must fit into the space above the selected row: title always single-line (long titles smaller),
             // description at most two lines. Otherwise it runs into the row title.
             val tsz = if (c.title.length <= 24) 84 else if (c.title.length <= 34) 66 else 54
-            Text(
-                raw = true, text = c.title, color = Tok.TextHi, fontSize = spx(tsz), lineHeight = spx(84),
+            // Title logo from TMDB (like on the detail page); the text title stays as fallback when there is none
+            val logoUrl = m?.logo?.takeIf { General.titleLogo }?.let { "https://image.tmdb.org/t/p/w500$it" }
+            var logoFailed by remember(logoUrl) { mutableStateOf(false) }
+            if (logoUrl != null && !logoFailed) {
+                AsyncImage(logoUrl, ShowName.of(c.title), Modifier.height(dpx(96)).widthIn(max = dpx(560)),
+                    contentScale = ContentScale.Fit, alignment = Alignment.CenterStart, onError = { logoFailed = true })
+            } else Text(
+                raw = true, text = ShowName.of(c.title), color = Tok.TextHi, fontSize = spx(tsz), lineHeight = spx(84),
                 fontWeight = FontWeight.ExtraBold, letterSpacing = (-1.5).sp, maxLines = 1, overflow = TextOverflow.Ellipsis
             )
             HeroMetaLine(c, m, dots = false)
