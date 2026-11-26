@@ -64,6 +64,9 @@ android {
         debug {
             applicationIdSuffix = ".test"
             manifestPlaceholders["appLabel"] = "IPVIO Stream"
+            // Personal build: with a keystore (GitHub secrets, see build.yml) every test build is signed with the same
+            // key, so a new build installs over the old one and keeps its data. Without one: the usual debug key.
+            if (hasKeystore) signingConfig = signingConfigs.getByName("release")
         }
         release {
             if (hasKeystore) signingConfig = signingConfigs.getByName("release")
