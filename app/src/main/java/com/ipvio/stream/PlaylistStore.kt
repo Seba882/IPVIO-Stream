@@ -860,14 +860,18 @@ object PlaylistStore {
         val app = c.applicationContext
         followScope.launch {
             delay(2000)
-            for (i in 0 until 30) {
+            // Wait until the running load (EPG, extra playlists …) is done: up to 15 minutes. Before, after one minute the
+            // follow-up gave up and movies and series stayed at zero until the next start.
+            for (i in 0 until 450) {
                 if (!loadLock.isLocked) {
                     Diag.note("TV first: loading movies and series in the background")
-                    runCatching { load(app, u, false, ask = false) }
+                    val ok = runCatching { load(app, u, false, ask = false) }
+                    if (ok.isFailure || ok.getOrNull() == false) Diag.report("TV first: movies and series not loaded (${ok.exceptionOrNull()?.javaClass?.simpleName ?: "load busy"}), next start loads them")
                     return@launch
                 }
                 delay(2000)
             }
+            Diag.report("TV first: movies and series not loaded (still busy), next start loads them")
         }
     }
 
